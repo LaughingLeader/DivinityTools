@@ -1,15 +1,8 @@
 from bs4 import BeautifulSoup
-
 import os
 import sys
-
-import subprocess
-
 import pathlib
 from pathlib import Path
-
-import re
-
 import shutil
 
 output_gameplay_soundbanks_template = """<?xml version="1.0" ?>
@@ -130,7 +123,7 @@ if input_dir != None and output_dir != None:
 			soundbank_events.append(event)
 			#print(event.debug_print())
 	
-		output_txt_str = "UUID Name    Hash    Duration    Attenuation" + os.linesep
+		output_txt_str = "UUID Name    Hash    Duration    Attenuation\n"
 		for event in soundbank_events:
 			output_txt_str += event.to_string()
 		
@@ -154,9 +147,12 @@ if input_dir != None and output_dir != None:
 		wem_files = list(input_dir.glob("*.wem"))
 		for f in wem_files:
 			shutil.copy(f.absolute(), output_dir.joinpath(f.name))
-		print("Copied '{}' .wem files.".format(len(wem_files)))
+		print("Copied '{}' .wem files to output folder.".format(len(wem_files)))
 
 		if shutil.copy(main_soundbank.absolute(), output_dir.joinpath(main_soundbank.name)):
-			print("Copied main soundbank '{}'.".format(main_soundbank.name))
+			print("Copied main soundbank '{}' to output folder.".format(main_soundbank.name))
 else:
-	raise Exception("Input and output directory arguments not included. Skipping.")
+	#raise Exception("Input and output directory arguments not included. Skipping.")
+	print("[ERROR] - Input and output directory arguments not included. Skipping.")
+
+input("Press ENTER to close.")

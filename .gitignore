@@ -3,3 +3,7 @@ site-packages/
 *.lsf
 *_Log*
 *.dds
+Scripts/build
+Scripts/dist
+Scripts/__pycache__
+*.spec
