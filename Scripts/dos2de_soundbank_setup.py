@@ -14,7 +14,7 @@ output_gameplay_soundbanks_template = """<?xml version="1.0" ?>
              <node id="SoundBanks"> 
                  <children>
                      <node id="SoundBank">
-                         <attribute id="Bank" value="{}" type="23" />
+                         <attribute id="Bank" value="{name}" type="23" />
                          <attribute id="Preload" value="0" type="27" />
                      </node>
                  </children>
@@ -31,7 +31,7 @@ output_soundsbankslsx_template = """<?xml version="1.0" ?>
      <node id="root">
          <children>
              <node id="Bank">
-                 <attribute id="MapKey" value="{}" type="22" />
+                 <attribute id="MapKey" value="{name}" type="22" />
                  <attribute id="Localized" value="0" type="19" />
              </node>
          </children>
@@ -134,13 +134,13 @@ if input_dir != None and output_dir != None:
 		
 		gameplay_soundbanks_lsxpath = output_dir.joinpath("GameplaySoundBanks.lsx")
 		if not gameplay_soundbanks_lsxpath.exists():
-			gameplay_soundsbanks_str = output_gameplay_soundbanks_template.format(main_soundbank.stem)
+			gameplay_soundsbanks_str = output_gameplay_soundbanks_template.format(name=main_soundbank.stem)
 			if export_file(gameplay_soundbanks_lsxpath, gameplay_soundsbanks_str):
 				print("Wrote '{}'.".format(gameplay_soundbanks_lsxpath))
 		
 		soundbanks_lsx_path = output_dir.joinpath("SoundBanks.lsx")
 		if not soundbanks_lsx_path.exists():
-			soundsbanks_str = output_soundsbankslsx_template.format(main_soundbank.stem)
+			soundsbanks_str = output_soundsbankslsx_template.format(name=main_soundbank.stem)
 			if export_file(soundbanks_lsx_path, soundsbanks_str):
 				print("Wrote '{}'.".format(soundbanks_lsx_path))
 		
