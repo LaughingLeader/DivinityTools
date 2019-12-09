@@ -1,0 +1,5 @@
+site-packages/
+*.png
+*.lsf
+*_Log*
+*.dds
