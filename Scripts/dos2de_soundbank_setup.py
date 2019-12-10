@@ -155,4 +155,4 @@ else:
 	#raise Exception("Input and output directory arguments not included. Skipping.")
 	print("[ERROR] - Input and output directory arguments not included. Skipping.")
 
-input("Press ENTER to close.")
+#input("Press ENTER to close.")

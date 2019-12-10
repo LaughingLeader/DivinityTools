@@ -98,7 +98,6 @@ def get_arg(arg, fallback):
 script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(script_dir)
 
-
 images_dir = get_arg(1, script_dir.joinpath("icons"))
 atlas_output = get_arg(2, script_dir.joinpath("AllIcons_Merged.lsx"))
 texture_output = get_arg(3, script_dir.joinpath("AllIcons_Merged.png"))

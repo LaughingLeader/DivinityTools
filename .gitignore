@@ -6,4 +6,6 @@ site-packages/
 Scripts/build
 Scripts/dist
 Scripts/__pycache__
+Generated/
 *.spec
+*.dll
