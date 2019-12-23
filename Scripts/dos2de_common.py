@@ -9,3 +9,6 @@ def export_file(path, contents):
     except Exception as e:
         print("Erroring writing '{}': {}".format(path.name, e))
     return False
+
+def is_empty(line):
+	return line in ['\n', '\r\n']
