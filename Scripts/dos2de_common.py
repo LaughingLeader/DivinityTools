@@ -12,3 +12,7 @@ def export_file(path, contents):
 
 def is_empty(line):
 	return line in ['\n', '\r\n']
+
+def clipboard_copy(output_str):
+    import pyperclip
+    pyperclip.copy(output_str)
