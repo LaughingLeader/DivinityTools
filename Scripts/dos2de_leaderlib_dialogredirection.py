@@ -23,15 +23,10 @@ LeaderLib_DialogOverride_QRY_CanRedirectObject({speaker})
 AND
 NOT LeaderLib_DialogOverride_QRY_SpeakersHaveAvatar({speakers})
 AND
-DB_Avatars(_Avatar)
+LeaderLib_DialogOverride_QRY_Internal_GetRedirectionTarget(_Dialog, {speaker})
 AND
-NOT DB_LeaderLib_DialogOverride_Temp_RedirectionTarget(_Dialog, _, _)
-AND
-QRY_SpeakerIsAvailable((GUIDSTRING)_Avatar, 0)
-AND
-LeaderLib_Helper_QRY_ObjectUserMatch((GUIDSTRING){speaker}, (GUIDSTRING)_Avatar)
+DB_LeaderLib_DialogOverride_Temp_RedirectionTarget(_Dialog, (GUIDSTRING)_Target, {speaker})
 THEN
-DB_LeaderLib_DialogOverride_Temp_RedirectionTarget(_Dialog, (GUIDSTRING)_Avatar, {speaker});
 DB_LeaderLib_DialogOverride_Temp_Order(_Dialog, {order});
 """
 
@@ -50,7 +45,7 @@ for start_count in range(6,1,-1):
 		order = ""
 		for i in range(1, start_count+1):
 			if i == num:
-				order += "(GUIDSTRING)_Avatar"
+				order += "(GUIDSTRING)_Target"
 			else:
 				order += "(GUIDSTRING)_Speaker{}".format(i)
 			if i < start_count: order += ", "
