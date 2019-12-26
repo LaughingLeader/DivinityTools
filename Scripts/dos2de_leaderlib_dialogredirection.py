@@ -5,11 +5,8 @@ SubGoalCombiner SGC_AND
 INITSECTION
 /* This script is auto-generated via {file} in DivinityTools*/
 KBSECTION
-{code}
-EXITSECTION
-
+{code}\nEXITSECTION
 ENDEXITSECTION"""
-
 
 template_redirection = """
 QRY
