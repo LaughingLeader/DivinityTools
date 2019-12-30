@@ -40,11 +40,13 @@ class Color():
 #         return -2147483648
 #     return x
 
-startpath = Path('G:/Divinity Original Sin 2/DefEd/Data/Editor/Mods/ZZZ_GreenNecroFire_0bc91e73-ce14-4d3f-934c-3024a8ba348d/Assets/Effects')
+#startpath = Path('G:/Divinity Original Sin 2/DefEd/Data/Editor/Mods/ZZZ_GreenNecroFire_0bc91e73-ce14-4d3f-934c-3024a8ba348d/Assets/Effects')
+startpath = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\WeaponExpansion_c60718c3-ba22-4702-9c5d-5ad92b41ba5f\Assets\Effects')
 color_prop_id = {}
-#color_prop_id['particles'] = '93b34a52-eef2-4f88-80f6-19e3126188ca'
+color_prop_id['particles'] = '93b34a52-eef2-4f88-80f6-19e3126188ca'
 color_prop_id['light'] = '16caf8e6-d471-43da-b704-c845b1437927'
 color_prop_id['ribbon'] = '5e5355ff-1c5f-48dd-888e-0129e288f8b6'
+color_prop_id['decal'] = '329fc981-abb2-422d-a808-ffa6f62fb778'
 
 def get_attribute_value(node, attribute_name):
     try:
@@ -75,6 +77,30 @@ def export_file(path, contents):
 		print("Error writing '{}': {}".format(path.name, e))
 	return False
 
+def swap_red_to_green(color):
+    if color.r > color.g:
+        g = color.g
+        r = color.r
+        color.r = g
+        color.g = r
+    return color
+
+def swap_blue_to_red(color):
+    if color.b > color.r:
+        b = color.b
+        r = color.r
+        color.r = b
+        color.b = r
+    return color
+
+def swap_blue_to_red(color):
+    if color.b > color.r:
+        b = color.b
+        r = color.r
+        color.r = b
+        color.b = r
+    return color
+
 def load_colors(file, colors):
     f = open(file, 'r', encoding='utf-8')
     contents = f.read()
@@ -99,11 +125,7 @@ def load_colors(file, colors):
         for c in colors:
             if not c.int in color_remap:
                 recolor = Color(c.int)
-                if recolor.r > recolor.g:
-                    g = recolor.g
-                    r = recolor.r
-                    recolor.r = g
-                    recolor.g = r
+                recolor = swap_blue_to_red(recolor)
                 color_remap[c.to_hex()] = recolor
         
         for c in colors:
@@ -112,10 +134,16 @@ def load_colors(file, colors):
                 c.node["value"] = str(recolor.to_int())
         
         file_path = Path(file)
+
+        backup_dir = file_path.parent.joinpath("_ColorReplace_Backup")
+        Path.mkdir(backup_dir, parents=True, exist_ok=True)
+        export_file(backup_dir.joinpath(file_path.name), contents)
+
         export_dir = file_path.parent.joinpath("_Generated")
         Path.mkdir(export_dir, parents=True, exist_ok=True)
 
-        target = export_dir.joinpath(file_path.name).with_name(file_path.stem.replace("RS3", "LLGREENFLAME")).with_suffix(".lsefx")
+        #target = export_dir.joinpath(file_path.name).with_name(file_path.stem.replace("RS3", "LLGREENFLAME")).with_suffix(".lsefx")
+        target = export_dir.joinpath(file_path.name).with_name(file_path.stem.replace("RS3", "LLWEAPONEX")).with_suffix(".lsefx")
         export_file(target, str(xml.prettify()))
 
 class Root(Tk):
@@ -151,9 +179,9 @@ class Root(Tk):
 #   c.a, c.r, c.g, c.b, c.to_hex().upper(),
 #       int32(c.to_int())))
 
-effect_files = list(startpath.glob('*.lsefx'))
-for f in effect_files:
-    load_colors(f.absolute(), [])
+# effect_files = list(startpath.glob('*.lsefx'))
+# for f in effect_files:
+#     load_colors(f.absolute(), [])
 
 win = Root()
 win.mainloop()
