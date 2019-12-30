@@ -18,6 +18,8 @@ LeaderLib_DialogOverride_QRY_CanRedirect(_Dialog)
 AND
 LeaderLib_DialogOverride_QRY_CanRedirectObject({speaker})
 AND
+NOT LeaderLib_DialogOverride_QRY_DialogIsPlayerStarted({speakers})
+AND
 NOT LeaderLib_DialogOverride_QRY_SpeakersHaveAvatar({speakers})
 AND
 LeaderLib_DialogOverride_QRY_Internal_GetRedirectionTarget(_Dialog, {speaker})
@@ -39,14 +41,18 @@ for start_count in range(6,1,-1):
 			params += "(GUIDSTRING)_Speaker{}".format(i)
 			if i < start_count: params += ", "
 		function_header = "LeaderLib_DialogOverride_QRY_GetRedirectionTarget((STRING)_Dialog, {})".format(params)
+		speakers = ""
+		for i in range(1, start_count+1):
+			speakers += "_Speaker{}".format(i)
+			if i < start_count: speakers += ", "
 		order = ""
 		for i in range(1, start_count+1):
 			if i == num:
-				order += "(GUIDSTRING)_Target"
+				order += "_Target"
 			else:
-				order += "(GUIDSTRING)_Speaker{}".format(i)
+				order += "_Speaker{}".format(i)
 			if i < start_count: order += ", "
-		output_str += template_redirection.format(function_header=function_header, speaker=speaker, order=order, speakers=params)
+		output_str += template_redirection.format(function_header=function_header, speaker=speaker, order=order, speakers=speakers)
 	output_str += '//END_REGION\n\n'
 
 from pathlib import Path
