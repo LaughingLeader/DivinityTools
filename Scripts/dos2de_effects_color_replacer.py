@@ -41,12 +41,19 @@ class Color():
 #     return x
 
 #startpath = Path('G:/Divinity Original Sin 2/DefEd/Data/Editor/Mods/ZZZ_GreenNecroFire_0bc91e73-ce14-4d3f-934c-3024a8ba348d/Assets/Effects')
-startpath = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\WeaponExpansion_c60718c3-ba22-4702-9c5d-5ad92b41ba5f\Assets\Effects')
+#startpath = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\WeaponExpansion_c60718c3-ba22-4702-9c5d-5ad92b41ba5f\Assets\Effects')
+startpath = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\ZZZ_PurpleNecrofire_c46b8710-e5f5-45f5-9485-a3993e11c951\Assets\Effects')
+bacupfolder = Path('D:\Modding\DOS2DE\Projects_Source\PurpleNecrofire\Effects_Recolor_Backup')
 color_prop_id = {}
 color_prop_id['particles'] = '93b34a52-eef2-4f88-80f6-19e3126188ca'
 color_prop_id['light'] = '16caf8e6-d471-43da-b704-c845b1437927'
 color_prop_id['ribbon'] = '5e5355ff-1c5f-48dd-888e-0129e288f8b6'
 color_prop_id['decal'] = '329fc981-abb2-422d-a808-ffa6f62fb778'
+color_prop_id['model'] = '1f15bd2c-f19a-437b-b98a-77c9631b9af0'
+color_prop_id['overlay'] = '2acf47b9-3924-46f3-a7a1-b1a6cbace32a'
+
+import datetime
+today = datetime.datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
 
 def get_attribute_value(node, attribute_name):
     try:
@@ -58,9 +65,10 @@ def get_attribute_value(node, attribute_name):
 def get_color_nodes(xml):
     nodes = []
     for k,prop in color_prop_id.items():
-        n = xml.find_all("rampchannel", {"id":prop})
-        if n != None:
+        n = list(xml.find_all("rampchannel", {"id":prop}))
+        if n != None and len(n) > 0:
             nodes.extend(n)
+            print("Found color component for type '{}'".format(k))
     if len(nodes) > 0:
         return nodes
     return None
@@ -85,6 +93,30 @@ def swap_red_to_green(color):
         color.g = r
     return color
 
+def swap_red_to_blue(color):
+    if color.r > color.b:
+        r = color.r
+        b = color.b
+        color.b = r
+        color.r = b
+    return color
+
+def swap_red_to_purple(color):
+    if color.r > color.b:
+        r = color.r
+        b = color.b
+        color.b = r
+        color.r = int(r/2)
+    return color
+
+def swap_green_to_blue(color):
+    if color.g > color.b:
+        g = color.g
+        b = color.b
+        color.b = g
+        color.g = b
+    return color
+
 def swap_blue_to_red(color):
     if color.b > color.r:
         b = color.b
@@ -106,8 +138,8 @@ def load_colors(file, colors):
     contents = f.read()
     xml = BeautifulSoup(contents, 'xml')
     p = Path(file)
-    file_backup = p.parent.joinpath("Backup/", p.name)
-    export_file(file_backup, contents)
+    #file_backup = p.parent.joinpath("Backup/", p.name)
+    #export_file(file_backup, contents)
     f.close()
     channels = get_color_nodes(xml)
     if channels != None:
@@ -119,13 +151,15 @@ def load_colors(file, colors):
                 if color_val != None:
                     color = Color(int32(color_val), k)
                     #print("New color: {}".format(k))
-                    color.debug_print()
+                    #color.debug_print()
                     colors.append(color)
         
         for c in colors:
             if not c.int in color_remap:
                 recolor = Color(c.int)
-                recolor = swap_blue_to_red(recolor)
+                #recolor = swap_green_to_blue(recolor)
+                recolor = swap_red_to_purple(recolor)
+                #recolor = swap_blue_to_red(recolor)
                 color_remap[c.to_hex()] = recolor
         
         for c in colors:
@@ -135,16 +169,17 @@ def load_colors(file, colors):
         
         file_path = Path(file)
 
-        backup_dir = file_path.parent.joinpath("_ColorReplace_Backup")
+        backup_dir = bacupfolder.joinpath(today)
         Path.mkdir(backup_dir, parents=True, exist_ok=True)
         export_file(backup_dir.joinpath(file_path.name), contents)
 
-        export_dir = file_path.parent.joinpath("_Generated")
-        Path.mkdir(export_dir, parents=True, exist_ok=True)
+        target = Path(file_path.with_name(file_path.stem.replace("RS3", "LLPURPLEFIRE")).with_suffix(".lsefx"))
+        if target.exists:
+            export_dir = file_path.parent.joinpath("_Generated")
+            Path.mkdir(export_dir, parents=True, exist_ok=True)
+            target = Path(export_dir.joinpath(file_path.name).with_name(file_path.stem.replace("RS3", "LLPURPLEFIRE")).with_suffix(".lsefx"))
 
-        #target = export_dir.joinpath(file_path.name).with_name(file_path.stem.replace("RS3", "LLGREENFLAME")).with_suffix(".lsefx")
-        target = export_dir.joinpath(file_path.name).with_name(file_path.stem.replace("RS3", "LLWEAPONEX")).with_suffix(".lsefx")
-        export_file(target, str(xml.prettify()))
+        export_file(target.absolute(), str(xml.prettify()))
 
 class Root(Tk):
     def __init__(self):
