@@ -27,11 +27,34 @@ THEN
 LLWEAPONEX_HandCrossbow_OnBoltInserted(_Char, _HandCrossbow, \"{template}\", _Slot);
 """
 
+elemental_arrowhead_template = """
+IF
+CharacterStatusRemoved(_Char, "{status}", _)
+THEN
+NOT DB_MyMod_Temp_ElementalArrowheadUsers(_Char, "{status}");
+MyMod_ToggleScript_Disable("MyMod_TS_ElementalArrowheads");
+
+IF
+CharacterStatusApplied(_Char, "{status}", _)
+THEN
+DB_MyMod_Temp_ElementalArrowheadUsers(_Char, "{status}");
+MyMod_ToggleScript_Enable("MyMod_TS_ElementalArrowheads");
+"""
+
+statuses = [
+	"ARROWHEAD_BLOOD",
+	"ARROWHEAD_ELECTRIC",
+	"ARROWHEAD_FIRE",
+	"ARROWHEAD_OIL",
+	"ARROWHEAD_POISON",
+	"ARROWHEAD_WATER"
+]
+
 import pyperclip
 
 output_str = ""
 
-for t in templates:
-	output_str += osiris_rules_template.format(template=t)
+for t in statuses:
+	output_str += elemental_arrowhead_template.format(status=t)
 
 pyperclip.copy(output_str)
