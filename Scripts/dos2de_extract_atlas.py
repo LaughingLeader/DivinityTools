@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 from PIL import Image
 import os
+import numpy
+import math
 from pathlib import Path
 
 class Atlas():
@@ -22,10 +24,10 @@ class Icon():
 		self.u2 = float(u2)
 		self.v2 = float(v2)
 		self.rect = (
-			int(atlas.image_width * (self.u1 - atlas.icon_offset)), 
-			int(atlas.image_height * (self.v1 - atlas.icon_offset)), 
-			int(atlas.image_width * (self.u2 + atlas.icon_offset)),
-			int(atlas.image_height * (self.v2 + atlas.icon_offset))
+			math.floor(atlas.image_width * (self.u1 + atlas.icon_offset)), 
+			math.floor(atlas.image_height * (self.v1 + atlas.icon_offset)), 
+			math.floor(atlas.image_width * (self.u2 - atlas.icon_offset)),
+			math.floor(atlas.image_height * (self.v2 - atlas.icon_offset))
 		)
 
 
@@ -33,11 +35,14 @@ script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 icons_output_dir = script_dir.joinpath("_Icons_Extracted").resolve()
 os.chdir(script_dir.resolve())
 
-atlases_dir = "G:/Divinity Original Sin 2/DefEd/Data/Public/HumanSebille_59f1d870-bdc6-45cb-a8fc-26a1b6afde33/GUI/"
-#atlases_dir = "D:/Modding/DOS2DE_Extracted/_ExtractedPaks/Public/Shared/GUI"
+#atlases_dir = "G:/Divinity Original Sin 2/DefEd/Data/Public/HumanSebille_59f1d870-bdc6-45cb-a8fc-26a1b6afde33/GUI/"
 #atlases_dir = "C:/Modding/Tools/_GUI"
-#textures_dir = "D:/Modding/DOS2DE_Extracted/_ExtractedPaks/Public/Shared/Assets/Textures/Icons"
-textures_dir = "G:/Divinity Original Sin 2/DefEd/Data/Public/HumanSebille_59f1d870-bdc6-45cb-a8fc-26a1b6afde33/Assets/Textures/Icons/"
+#textures_dir = "G:/Divinity Original Sin 2/DefEd/Data/Public/HumanSebille_59f1d870-bdc6-45cb-a8fc-26a1b6afde33/Assets/Textures/Icons/"
+atlases_dir = "D:/Modding/DOS2DE/Projects_Source/CombinedAtlases/GUI_Original"
+textures_dir = "D:/Modding/DOS2DE/Projects_Source/CombinedAtlases/Textures"
+
+atlases_dir = "D:/Modding/DOS2DE_Extracted/Public/Shared/GUI"
+textures_dir = "D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Textures/Icons"
 
 atlas_files = []
 texture_files = []
@@ -91,13 +96,16 @@ for atlasname, atlas_path in atlas_files:
 			os.makedirs(output_dir)
 
 		print("Opening texture: {}".format(texture_path))
-		img = Image.open(texture_path)
+		img = Image.open(texture_path).convert('RGBA')
 		for icon in atlas.icons:
+			if icon.name == "Item_TOOL_Dye_Yellow":
+				print("Item_TOOL_Dye_Yellow: rect|{}".format(icon.rect))
 			img_crop = img.crop(icon.rect)
 			result_image = Image.new('RGBA', (atlas.icon_width, atlas.icon_height), (0, 0, 0, 0))
-			result_image.paste(img_crop, (0,0), mask=0)
+			#result_image.paste(img_crop, (0,0), mask=0)
+			result_image.alpha_composite(img_crop, (0,0))
 			filename = os.path.join(output_dir, icon.name + ".png")
-			print("Writing icon to: {}".format(filename))
+			#print("Writing icon to: {}".format(filename))
 			result_image.save(filename)
 	else:
 		print("Texture '{}' does not exist!".format(texture_path))
