@@ -57,7 +57,7 @@ class Rect():
 class Icon():
     def __init__(self, image_path, x,y,u1,v1,u2,v2):
         self.image_path = image_path
-        self.image = Image.open(image_path)
+        self.image = Image.open(image_path).convert("RGBA")
         self.name = Path(image_path).stem
         self.pos = (x,y)
         self.uv = Rect(u1,v1,u2,v2)
@@ -143,6 +143,7 @@ for img in images:
     truncate_v1 = 8
     truncate_u2 = 7
     truncate_v2 = 7
+
     if x <= 1 and y == 0: 
         u1 = truncate(numpy.clip(float(((icon_size * x) / atlas_size) + padding), 0, 1.0), 9, round_num=True)
         v1 = truncate(numpy.clip(float(((icon_size * y) / atlas_size) + padding), 0, 1.0), 9, round_num=False)
@@ -156,8 +157,8 @@ for img in images:
 
     icon = Icon(
         img.resolve(),
-        x * icon_size,
-        y * icon_size,
+        x * icon_size, #math.floor(atlas_size * u1),
+        y * icon_size, #math.floor(atlas_size * v1),
         u1,v1,u2,v2)
 
     if x <= 1 and y == 0:
@@ -203,7 +204,9 @@ f.write(xml_str)
 texture_image = Image.new('RGBA', (atlas_size, atlas_size), (0, 0, 0, 0))
 
 for icon in icons:
-    texture_image.paste(icon.image, icon.pos, mask=0)
+    print("** Pasting '{}'.".format(icon.name))
+    #texture_image.paste(icon.image, icon.pos, mask=0)
+    texture_image.alpha_composite(icon.image, icon.pos)
 
 print("Saving texture to '{}'.".format(texture_output))
 
@@ -211,7 +214,7 @@ texture_image.save(texture_output)
 
 print("Done. Took **{} seconds** to merge {} icons.".format(time.time() - start_time, total))
 
-convert_params = 'nvcompress -alpha -bc3 "{}" "{}"'.format(texture_output, texture_dds_output)
+#convert_params = 'nvcompress -alpha -bc3 "{}" "{}"'.format(texture_output, texture_dds_output)
 
 # p = subprocess.run([convert_params],
 #   shell=True,
