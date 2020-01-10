@@ -52,15 +52,35 @@ for p in metafiles:
 	if module_info != None:
 		name = get_attribute(module_info, "Name")
 		larianmod_display_name = get_attribute(module_info, "DisplayName")
+		description = get_attribute(module_info, "Description")
+		larianmod_description = get_attribute(module_info, "DescriptionName")
 		folder = get_attribute(module_info, "Folder")
 		uuid = get_attribute(module_info, "UUID")
+		version = get_attribute(module_info, "Version")
+		mod_type = get_attribute(module_info, "Type")
+		md5 = get_attribute(module_info, "MD5")
+		target = "Story"
 
 		if larianmod_display_name is not None:
 			name = larianmod_display_name
 
+		if larianmod_description is not None:
+			description = larianmod_description
+
 		if uuid is not None:
 			d = Data(name, folder, uuid)
+			d.description = description
+			d.version = version
+			d.mod_type = mod_type
+			d.target = target
+			d.md5 = md5
 			metadata.append(d)
 
-for data in metadata:
-	print('new DivinityModData{{ Name = \"{}\", UUID = \"{}\", Folder=\"{}\"}},'.format(data.name, data.uuid, data.folder))
+output_str = ""
+
+for data in sorted(metadata, key=lambda x: {x.name}):
+	output_str += 'new DivinityModData{{ Name = \"{}\", UUID = \"{}\", Folder=\"{}\", Version=DivinityModVersion.FromInt({}), Type=\"{}\", Targets=\"{}\", Author=\"Larian\", Description=\"{}\", MD5=\"{}\"}},\n'.format(data.name, data.uuid, data.folder, data.version, data.mod_type, data.target, data.description, data.md5)
+	print(output_str)
+
+import pyperclip
+pyperclip.copy(output_str)
