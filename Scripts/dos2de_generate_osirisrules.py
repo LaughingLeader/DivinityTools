@@ -1,28 +1,87 @@
 
 
-items = [
-"WPN_LLWEAPONEX_CombatShield_Blackring_1H_A_ec353f1e-c1ca-46d1-83ef-e9f4fea14475",
-"WPN_LLWEAPONEX_CombatShield_Common_1H_A_8c7da07b-ad11-4a0c-8406-0261977042b6",
-"WPN_LLWEAPONEX_CombatShield_Dwarves_1H_A_bc034226-19bd-45e6-be7d-ec0d28c2e412",
-"WPN_LLWEAPONEX_CombatShield_Elves_1H_B_1268f5f0-e484-42ea-8c13-0014e6aeaaad",
-"WPN_LLWEAPONEX_CombatShield_Humans_1H_A_3a404dab-4862-4490-aa0f-bc27d06fdc6c",
-"WPN_LLWEAPONEX_CombatShield_Lizards_1H_C_067f48be-857d-43a8-bd0a-add59f025843",
-"WPN_LLWEAPONEX_Shield_DualShields_Blackring_A_9d98560d-916a-4ea0-8064-8a5ac8c13b45",
-"WPN_LLWEAPONEX_Shield_DualShields_Common_A_8df9c20b-98f5-4f48-8438-573456fdfbf1",
-"WPN_LLWEAPONEX_Shield_DualShields_Dwarves_A_91fd35cb-93dd-4489-9cf5-2dcc9b0ac168",
-"WPN_LLWEAPONEX_Shield_DualShields_Elves_B_565e917f-ed53-40ed-8093-2133bc3e2a50",
-"WPN_LLWEAPONEX_Shield_DualShields_Humans_A_c0bf83ff-5a55-4ac8-8a2b-9d9044c10d10",
-"WPN_LLWEAPONEX_Shield_DualShields_Lizards_C_4f6f404a-06df-4041-bda6-87b7e24fd52e",
+templates = [
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_Air_72a7d3aa-02d7-4c9b-a565-d94c8a5664b0",
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_Corrosive_598b8cb5-7f76-4c50-a609-2a3cd0aa0415",
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_Earth_8a29169a-e73d-4878-9769-8b4555140fb0",
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_Fire_1fe1e11c-2e54-4104-b80a-b6fa0b4b8e99",
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_Normal_baf9826a-abe8-4bc8-8c56-b68b5611c223",
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_Poison_c3f61b7d-5183-4664-9773-0b630374b7c9",
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_Shadow_7dcb9e1f-b807-4321-8408-c66f833ae73c",
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_Water_40af98d5-3584-40cc-8c9f-e3a49564f365",
+	"LOOT_Rune_LLWEAPONEX_Crossbow_Bolt_WeaponProxy_8c1da19c-02e9-4a6c-b253-1b3e31b7740f"
 ]
 
-rule_template = """
+osiris_rules_template = """
 IF
-ItemTemplateAddedToCharacter({item}, _Item, _Char)
-AND
-IsTagged(_Item, "LLWEAPONEX_CombatShield", 1)
-AND
-NOT LeaderLib_Variables_QRY_ObjectVariableSet(_Item, "LLWEAPONEX_ParentDualShield")
+ItemTemplateAddedToCharacter({template}, _Item, _Char)
 THEN
+LLWEAPONEX_HandCrossbow_TryInsertBolt(_Char, _Item, \"{template}\", 0);
+
+IF
+CharacterUsedItemTemplate(_Char, \"{template}\", _Item)
+THEN
+LLWEAPONEX_HandCrossbow_TryInsertBolt(_Char, _Item, \"{template}\", 1);
+
+IF
+RuneInserted(_Char, _HandCrossbow, \"{template}\", _Slot)
+THEN
+LLWEAPONEX_HandCrossbow_OnBoltInserted(_Char, _HandCrossbow, \"{template}\", _Slot);
 """
 
-for item in items:
+elemental_arrowhead_template = """
+IF
+CharacterStatusRemoved(_Char, "{status}", _)
+THEN
+NOT DB_MyMod_Temp_ElementalArrowheadUsers(_Char, "{status}");
+MyMod_ToggleScript_Disable("MyMod_TS_ElementalArrowheads");
+
+IF
+CharacterStatusApplied(_Char, "{status}", _)
+THEN
+DB_MyMod_Temp_ElementalArrowheadUsers(_Char, "{status}");
+MyMod_ToggleScript_Enable("MyMod_TS_ElementalArrowheads");
+"""
+
+statuses = [
+	"ARROWHEAD_BLOOD",
+	"ARROWHEAD_ELECTRIC",
+	"ARROWHEAD_FIRE",
+	"ARROWHEAD_OIL",
+	"ARROWHEAD_POISON",
+	"ARROWHEAD_WATER"
+]
+
+runeblade_statuses = [
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_AVALANCHE",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_BLOOD_AIR",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_BLOOD_EARTH",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_BLOOD_FIRE",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_BLOOD_POISON",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_BLOOD_WATER",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_CONDUCTION",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_CONTAMINATION",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_DUST",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_EXPLOSIVE",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_GAS",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_HEATWAVE",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_LAVA",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_SEARING",
+"LLWEAPONEX_ACTIVATE_RUNEBLADE_TAR"
+]
+
+runeblade_status_template = """
+IF
+CharacterStatusApplied(_Char, "{status}", _)
+THEN
+LLWEAPONEX_Runeblades_OnBonusDamageStatusApplied(_Char, "{status}");
+"""
+
+import pyperclip
+
+output_str = ""
+
+for t in runeblade_statuses:
+	output_str += runeblade_status_template.format(status=t)
+
+pyperclip.copy(output_str)
