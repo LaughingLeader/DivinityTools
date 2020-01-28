@@ -2,6 +2,7 @@ from pathlib import Path
 
 def export_file(path, contents):
     try:
+        path.parent.mkdir(parents=True, exist_ok=True)
         f = open(str(path.absolute()), 'w')
         f.write(contents)
         f.close()
