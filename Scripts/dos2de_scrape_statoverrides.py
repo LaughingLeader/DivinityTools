@@ -207,18 +207,24 @@ for file in mod_file_data.values():
 			count = len(override_stat.overrides)
 			i = 0
 			for override in override_stat.overrides:
+				comment = override.name == "DisplayName" or override.name == "Description"
+
+				output = "--" if comment else ""
 				if isnum(override.new):
-					props_str += '["{}"] = {},'.format(override.name, override.new)
+					output += '["{}"] = {},'.format(override.name, override.new)
 				else:
-					props_str += '["{}"] = "{}",'.format(override.name, override.new)
+					output += '["{}"] = "{}",'.format(override.name, override.new)
 				i = i + 1
 				if i < count:
-					props_str += "\n\t\t\t"
+					output += "\n\t\t\t"
+				props_str += output
 			stats_str += stat_template.format(stat=override_stat.name, props=props_str)
 		data_str += file_template.format(name=file.name,stats=stats_str)
 output_str = export_template.format(data=data_str).strip()
 output_str = "".join([s for s in output_str.splitlines(True) if s.strip()])
-import pyperclip
-pyperclip.copy(output_str)
 
-common.export_file(Path("Generate_StatScraper").joinpath("LocalKeys_Needed.txt"), "\n".join(localkeys))
+#import pyperclip
+#pyperclip.copy(output_str)
+
+common.export_file(Path("Generated_StatScraper").joinpath("StatOverride_Generated.lua"), output_str)
+common.export_file(Path("Generated_StatScraper").joinpath("LocalKeys_Needed.txt"), "\n".join(localkeys))

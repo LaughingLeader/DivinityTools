@@ -8,7 +8,7 @@ Scripts/dist
 Scripts/__pycache__
 Scripts/_Data_Characters/
 Scripts/_Data_RootTemplates/
-Scripts/Generated_CharacterData/
+Scripts/Generated*
 Generated/
 *.spec
 *.dll
