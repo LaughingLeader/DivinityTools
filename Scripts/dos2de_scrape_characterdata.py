@@ -4,8 +4,8 @@ from pathlib import Path
 import glob
 import dos2de_common as Common
 
-file_top = "UUID\tName\tAlignment\tDefault State\tIsBoss\tTags\n"
-data_template = '{id}\t{name}\t{alignment}\t{default_state}\t{boss}\t{tags}\n'
+file_top = "Name\tUUID\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tIsBoss\tDefault State\n"
+data_template = '{name}\t{id}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{boss}\t{default_state}\n'
 entry_template = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id});\n'
 #file_top = "UUID\tName\tAlignment\tDialog\tDefault State\tIsBoss\tTags\n"
 #data_template = '{id}\t{name}\t{alignment}\t{dialog}\t{default_state}\t{boss}\t{tags}\n'
@@ -42,6 +42,9 @@ class Character():
 		self.alignment = ""
 		self.defaultdialog = ""
 		self.default_state = 0
+		self.stats = ""
+		self.trade_treasure = []
+		self.treasure = []
 
 	def parse(self, xmlobj):
 		default_state = get_attribute(xmlobj, "DefaultState")
@@ -66,6 +69,7 @@ class Character():
 		self.boss = is_boss == "True"
 		self.alignment = get_attribute(xmlobj, "Alignment")
 		self.defaultdialog = get_attribute(xmlobj, "DefaultDialog")
+		self.stats = get_attribute(xmlobj, "Stats")
 
 		if self.defaultdialog != "":
 			print("{} has dialog {}".format(self.name, self.defaultdialog))
@@ -75,6 +79,18 @@ class Character():
 			tag_name = get_attribute(x, "Object")
 			if tag_name is not None and tag_name != "":
 				self.tags.append(tag_name)
+		
+		trade_treasure_xml = list(xmlobj.find_all("node", attrs={"id":"TradeTreasures"}))
+		for x in trade_treasure_xml:
+			treasure_name = get_attribute(x, "TreasureItem")
+			if treasure_name is not None and treasure_name != "":
+				self.trade_treasure.append(treasure_name)
+		
+		treasure_xml = list(xmlobj.find_all("node", attrs={"id":"Treasures"}))
+		for x in treasure_xml:
+			treasure_name = get_attribute(x, "TreasureItem")
+			if treasure_name is not None and treasure_name != "":
+				self.treasure.append(treasure_name)
 
 	def copy(self, obj, prop):
 		try:
@@ -93,13 +109,22 @@ class Character():
 				self.copy(template, "display_name")
 				self.copy(template, "alignment")
 				self.copy(template, "boss")
+				self.copy(template, "stats")
 				for tag in template.tags:
 					if not tag in self.tags:
 						self.tags.append(tag)
+				if len(self.trade_treasure) == 0:
+					for treasure in template.trade_treasure:
+						if not treasure in self.trade_treasure:
+							self.trade_treasure.append(treasure)
+				if len(self.treasure) == 0:
+					for treasure in template.treasure:
+						if not treasure in self.treasure:
+							self.treasure.append(treasure)
 
-	def export_tags(self):
-		self.tags.sort(reverse=False)
-		return str(self.tags).strip('[]').replace("'", "")
+	def export_list(self, tbl, repl="", repl_with=""):
+		tbl.sort(reverse=False)
+		return str(tbl).strip('[]').replace("'", "").replace(repl, repl_with)
 
 	def get_default_state(self):
 		try:
@@ -116,9 +141,20 @@ class Character():
 			self.default_state = 0
 	
 	def export(self):
+		treasure_export = "Empty"
+		if len(self.treasure) > 0:
+			treasure_export = self.export_list(self.treasure)
+		trade_treasure_export = "Empty"
+		if len(self.trade_treasure) > 0:
+			trade_treasure_export = self.export_list(self.trade_treasure)
+
+		if treasure_export == "Empty": treasure_export = ""
+		if trade_treasure_export == "Empty": trade_treasure_export = ""
+
 		return data_template.format(id=self.id, name=self.display_name,
-			boss=self.boss,alignment=self.alignment,dialog=self.defaultdialog,
-				tags=self.export_tags(),default_state=self.get_default_state())
+			boss=self.boss,alignment=self.alignment,dialog=self.defaultdialog,stats=self.stats,
+				tags=self.export_list(self.tags),default_state=self.get_default_state(),
+					treasure=treasure_export,trade_treasure=trade_treasure_export)
 
 def get_attribute(xml, id):
 	v = xml.find("attribute", attrs={"id":id})
@@ -133,7 +169,7 @@ elite_tags = [
 	"BADASSCIVILIAN",
 	"NOT_MESSING_AROUND",
 	"PALADIN",
-	"AGGRESSIVEANIMAL",
+	#"AGGRESSIVEANIMAL",
 ]
 
 def has_elite_tag(x):
