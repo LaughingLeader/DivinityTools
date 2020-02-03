@@ -77,7 +77,7 @@ class Character():
 		tags_xml = list(xmlobj.find_all("node", attrs={"id":"Tag"}))
 		for x in tags_xml:
 			tag_name = get_attribute(x, "Object")
-			if tag_name is not None and tag_name != "":
+			if tag_name is not None and tag_name != "" and not tag_name in self.tags:
 				self.tags.append(tag_name)
 		
 		trade_treasure_xml = list(xmlobj.find_all("node", attrs={"id":"TradeTreasures"}))
@@ -165,29 +165,64 @@ def get_attribute(xml, id):
 		except: pass
 	return ""
 
-elite_tags = [
-	"BADASSCIVILIAN",
-	"NOT_MESSING_AROUND",
-	"PALADIN",
-	#"AGGRESSIVEANIMAL",
-]
+elite_tags = {
+	"TUT_Tutorial_A" : [
+		"BADASSCIVILIAN",
+		"NOT_MESSING_AROUND",
+		"PALADIN",
+		#"AGGRESSIVEANIMAL",
+	],
+	"FJ_FortJoy_Main" : [
+		"BADASSCIVILIAN",
+		"NOT_MESSING_AROUND",
+		"PALADIN",
+	],
+	"LV_HoE_Main" : [
+		"BADASSCIVILIAN",
+		"NOT_MESSING_AROUND"
+	],
+	"RC_Main" : [
+		"NOT_MESSING_AROUND",
+		"BLOODSPAWN",
+	],
+	"CoS_Main" : [
+		"NOT_MESSING_AROUND",
+		"Orc",
+		"DEMON",
+		"AUTOMATON",
+	],
+	"Arx_Main" : [
+		"NOT_MESSING_AROUND",
+		"INFERNAL_LIZARD",
+		"ARX_GARDENBOSS",
+	]
+}
 
-def has_elite_tag(x):
-	for tag in elite_tags:
-		if tag in x.tags:
+def has_elite_tag(x, key):
+	if key in elite_tags.keys():
+		group = elite_tags[key]
+		for tag in group:
+			if tag in x.tags:
+				return True
+	return False
+
+def is_elite_tag(tag, key):
+	if key in elite_tags.keys():
+		group = elite_tags[key]
+		if tag in group:
 			return True
 	return False
 
 def export(key, level_data):
 	output_str = file_top
-
-	bosses = list([x for x in level_data if (x.boss == True or has_elite_tag(x)) and x.default_state == 0])
+	bosses = list([x for x in level_data if (x.boss == True or has_elite_tag(x, key)) and x.default_state == 0])
+	bosses.sort(key=lambda x: (x.display_name.strip()), reverse=False)
 	for character in bosses:
 		output_str += character.export()
 	if output_str != "":
 		output_str += '\n'
 		for character in bosses:
-			bonus_comment = "// {}\n".format(character.display_name)
+			bonus_comment = "// {} | {}\n".format(character.display_name, character.export_list([x for x in character.tags if is_elite_tag(x, key)]))
 			if character.boss:
 				bonus_comment = "// Boss: {}\n".format(character.display_name)
 			output_str += bonus_comment
