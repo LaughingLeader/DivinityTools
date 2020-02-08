@@ -50,6 +50,13 @@ class Character():
 		default_state = get_attribute(xmlobj, "DefaultState")
 		is_boss = get_attribute(xmlobj, "IsBoss")
 		display_name = get_attribute(xmlobj, "DisplayName")
+		try:
+			handle = xmlobj.find("attribute", attrs={"id":"DisplayName"})["handle"]
+			if handle in english_entries.keys():
+				locale_name = english_entries[handle]
+				if locale_name != "" and locale_name != None:
+					display_name = locale_name
+		except: pass
 
 		self.name = get_attribute(xmlobj, "Name")
 		self.uuid = get_attribute(xmlobj, "MapKey")
@@ -213,16 +220,25 @@ def is_elite_tag(tag, key):
 			return True
 	return False
 
+def has_elite_treasure(x, key):
+	for treasure in x.treasure:
+		if "boss" in x.treasure:
+			return True
+	return False
+
 def export(key, level_data):
 	output_str = file_top
-	bosses = list([x for x in level_data if (x.boss == True or has_elite_tag(x, key)) and x.default_state == 0])
+	bosses = list([x for x in level_data if x.default_state == 0 and (x.boss == True or has_elite_tag(x, key) or has_elite_treasure(x, key))])
 	bosses.sort(key=lambda x: (x.display_name.strip()), reverse=False)
 	for character in bosses:
 		output_str += character.export()
 	if output_str != "":
 		output_str += '\n'
 		for character in bosses:
-			bonus_comment = "// {} | {}\n".format(character.display_name, character.export_list([x for x in character.tags if is_elite_tag(x, key)]))
+			elite_comment = character.export_list([x for x in character.tags if is_elite_tag(x, key)])
+			if elite_comment == "":
+				elite_comment = "Treasure: {}".format(character.export_list([x for x in character.treasure if "boss" in x]))
+			bonus_comment = "// {} | {}\n".format(character.display_name, elite_comment)
 			if character.boss:
 				bonus_comment = "// Boss: {}\n".format(character.display_name)
 			output_str += bonus_comment
@@ -242,6 +258,24 @@ def export(key, level_data):
 
 script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(script_dir.resolve())
+
+english_xml_path = Path("G:/Modding/DOS2DE/Projects_Source/DivinityTools/Scripts/_Data_Characters/english.xml")
+english_entries = {}
+
+def parse_english_xml():
+	f = open(english_xml_path.absolute(), 'r', encoding='utf8')
+	english_xml = BeautifulSoup(f.read(), 'lxml')
+	f.close()
+	content_nodes = list(english_xml.find_all("content"))
+	for node in content_nodes:
+		try:
+			handle = node["contentuid"]
+			contents = node.text
+			english_entries[handle] = contents
+		except Exception as e:
+			print("Error parsing content node: \n{}".format(e))
+
+parse_english_xml()
 
 root_templates = {}
 data_templates_dir = Path("G:/Modding/DOS2DE/Projects_Source/DivinityTools/Scripts/_Data_RootTemplates")
