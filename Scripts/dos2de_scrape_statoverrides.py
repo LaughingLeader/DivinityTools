@@ -67,9 +67,13 @@ class Modifier():
 	def __init__(self, name, value):
 		self.name = name
 		self.value = value
+		self.export_name = ""
+		self.display_name = ""
 
 class ModifierType():
-	def __init__(self, name, export_type):
+	def __init__(self, name:str, export_type):
+		if "Status_" in name:
+			name = name.replace("Status_", "")
 		self.name = name
 		self.export_type = export_type
 		self.modifiers = {}
@@ -77,9 +81,9 @@ class ModifierType():
 def get_modifier(stattype, propname, subtype=""):
 	for modtype in modifiers.values():
 		#print("{} | {}".format(modtype.export_type, stattype))
+		#if propname == "AuraRadius": print("Looking for: ({})({}) {} in {}({})".format(stattype, propname, subtype, modtype.name, modtype.export_type))
 		if modtype.export_type == stattype:
 			if stattype == "SkillData" or stattype == "StatusData":
-				
 				if modtype.name == subtype:
 					for mod in modtype.modifiers.values():
 						if mod.name == propname:
@@ -121,6 +125,8 @@ def build_statdefinitions(file_path, debug=False):
 			def_name = defnode["export_name"]
 			def_type = defnode["type"]
 			mod = Modifier(def_name, def_type)
+			mod.display_name = defnode["display_name"]
+			mod.export_name = defnode["export_name"]
 			modifier_type.modifiers[def_name] = mod
 			if debug: print("---- Found modifier {} with value {}".format(def_name, def_type))
 
@@ -169,7 +175,7 @@ build_statdefinitions(statobdefinitins_path)
 
 data_folder = Path("D:\Modding\DOS2DE_Extracted\Public\Shared\Stats\Generated\Data")
 origins_folder = Path("D:\Modding\DOS2DE_Extracted\Public\DivinityOrigins_1301db3d-1f54-4e98-9be5-5094030916e4\Stats\Generated\Data")
-mod_folder = Path("G:\Divinity Original Sin 2\DefEd\Data\Public\Kalavinkas_Combat_Enhanced_e844229e-b744-4294-9102-a7362a926f71\Stats\Generated\Data")
+mod_folder = Path("D:\Modding\DOS2DE_Mods\Kalavinkas_Combat_Enhanced_e844229e-b744-4294-9102-a7362a926f71\Public\Kalavinkas_Combat_Enhanced_e844229e-b744-4294-9102-a7362a926f71\Stats\Generated\Data")
 
 all_game_files = list(data_folder.glob("*.txt"))
 all_origins_files = list(origins_folder.glob("*.txt"))
@@ -344,6 +350,8 @@ stat_template = """
 		}},
 """
 
+locale_overrides = {}
+
 def get_output_value(override_stat, override):
 	subtype = ""
 	if override_stat.type == "SkillData":
@@ -352,11 +360,16 @@ def get_output_value(override_stat, override):
 		subtype = override_stat.properties["StatusType"].value
 	mod_type = get_modifier(override_stat.type, override.name, subtype)
 	#if override_stat.type == "SkillData": print("{} | {} {} | {}".format(mod_type, override_stat.type, override.name, subtype))
+	#print("{} - {}".format(override.name, mod_type))
 	if mod_type == "Enumeration":
 		return '"{}"'.format(override.new)
-	elif mod_type == "Integer" or mod_type == "Float":
+	elif mod_type == "Integer" or mod_type == "Float" or mod_type == "ConstantInt":
 		return override.new
 	else:
+		if override.name == "DisplayName" or override.name == "Description":
+			next_name = override.new.replace(override.name, "KCE_{}".format(override.name))
+			locale_overrides[next_name] = override.new
+			override.new = next_name
 		return '"{}"'.format(override.new)
 
 output_str = ""
@@ -370,8 +383,9 @@ for file in mod_file_data.values():
 			count = len(override_stat.overrides)
 			i = 0
 			for override in override_stat.overrides:
-				comment = override.name == "DisplayName" or override.name == "Description"
-				output = "--" if comment else ""
+				#comment = override.name == "DisplayName" or override.name == "Description"
+				#output = "--" if comment else ""
+				output = ""
 				output += '["{}"] = {},'.format(override.name, get_output_value(override_stat, override))
 				i = i + 1
 				if i < count:
@@ -425,3 +439,23 @@ for file in mod_file_data.values():
 
 	if output_str != "":
 		common.export_file(dir_output.joinpath("{}.txt".format(file.name)), output_str)
+
+stats_tsv = open("G:\Modding\DOS2DE\Projects_Source\DivinityTools\Scripts\Generated_Localization\Stats.tsv", 'r')
+lines = stats_tsv.readlines()
+stats_tsv.close()
+lines.pop(0)
+
+tsv_entries = {}
+for line in lines:
+	entry = tuple(line.strip().split("\t"))
+	tsv_entries[entry[0]] = entry
+
+output_tsv = "Key\tContent\tHandle\n"
+
+for newkey,basekey in locale_overrides.items():
+	if basekey in tsv_entries.keys():
+		base_entry = tsv_entries[basekey]
+		output_tsv += "{}\t{}\t{}\n".format(newkey, base_entry[1], base_entry[2])
+
+output_path = script_dir.joinpath("Generated_Localization").joinpath("Stats.tsv")
+common.export_file(Path("Generated_StatScraper").joinpath("LocaleOverrides.tsv"), output_tsv)
