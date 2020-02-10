@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import glob
 import dos2de_common as Common
+from typing import List, Dict
 
 file_top = "Name\tUUID\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tIsBoss\tDefault State\n"
 data_template = '{name}\t{id}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{boss}\t{default_state}\n'
@@ -38,13 +39,13 @@ class Character():
 		self.boss = False
 		self.display_name = ""
 		self.id = ""
-		self.tags = []
+		self.tags:List[str] = []
 		self.alignment = ""
 		self.defaultdialog = ""
 		self.default_state = 0
 		self.stats = ""
-		self.trade_treasure = []
-		self.treasure = []
+		self.trade_treasure:List[str] = []
+		self.treasure:List[str] = []
 
 	def parse(self, xmlobj):
 		default_state = get_attribute(xmlobj, "DefaultState")
@@ -205,7 +206,9 @@ elite_tags = {
 	]
 }
 
-def has_elite_tag(x, key):
+def has_elite_tag(x:Character, key:str)->bool:
+	if "GHOST" in x.tags:
+		return False
 	if key in elite_tags.keys():
 		group = elite_tags[key]
 		for tag in group:
@@ -213,16 +216,16 @@ def has_elite_tag(x, key):
 				return True
 	return False
 
-def is_elite_tag(tag, key):
+def is_elite_tag(tag:str, key:str)->bool:
 	if key in elite_tags.keys():
 		group = elite_tags[key]
 		if tag in group:
 			return True
 	return False
 
-def has_elite_treasure(x, key):
-	for treasure in x.treasure:
-		if "boss" in x.treasure:
+def has_elite_treasure(x:Character, key:str)->bool:
+	for name in x.treasure:
+		if "boss" in name.lower():
 			return True
 	return False
 
@@ -237,7 +240,9 @@ def export(key, level_data):
 		for character in bosses:
 			elite_comment = character.export_list([x for x in character.tags if is_elite_tag(x, key)])
 			if elite_comment == "":
-				elite_comment = "Treasure: {}".format(character.export_list([x for x in character.treasure if "boss" in x]))
+				elite_comment = "Treasure: {}".format(character.export_list(list([x for x in character.treasure if "boss" in x.lower()])))
+			else:
+				elite_comment = "Tags: " + elite_comment
 			bonus_comment = "// {} | {}\n".format(character.display_name, elite_comment)
 			if character.boss:
 				bonus_comment = "// Boss: {}\n".format(character.display_name)
