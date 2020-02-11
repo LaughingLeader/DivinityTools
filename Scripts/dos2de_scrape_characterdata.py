@@ -8,6 +8,7 @@ from typing import List, Dict
 file_top = "Name\tUUID\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tIsBoss\tDefault State\n"
 data_template = '{name}\t{id}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{boss}\t{default_state}\n'
 entry_template = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id});\n'
+entry_template2 = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id}, "{group}", "{type}");\n'
 #file_top = "UUID\tName\tAlignment\tDialog\tDefault State\tIsBoss\tTags\n"
 #data_template = '{id}\t{name}\t{alignment}\t{dialog}\t{default_state}\t{boss}\t{tags}\n'
 
@@ -229,6 +230,47 @@ def has_elite_treasure(x:Character, key:str)->bool:
 			return True
 	return False
 
+guaranteed_upgrades = {
+	"S_FTJ_SW_FinalBattle_Voidwoken_7dcf3cc2-d015-4aff-9949-71fc539fcc73": [
+		("Immunities", "Immunity"),
+		("Bonus", "Infusion_Elite"),
+		("Bonus", "Special"),
+	],
+	"S_GLO_Alexandar_03e6345f-1bd3-403c-80e2-a443a74f6349": [
+		("Auras", "Auras_Main"),
+		("Immunities", "Immunity"),
+	],
+	"S_GLO_Dallis_69b951dc-55a4-44b8-a2d5-5efedbd7d572": [
+		("Talents", "Elite"),
+		("Auras", "Auras_Main"),
+	],
+	"S_FTJ_GhettoBoss_84758f75-01a3-4cce-9922-f42ffc4afddd": [
+		("Bonus", "Infusion_Elite"),
+		("Auras", "Auras_Main"),
+	],
+	"S_FTJ_MagisterTorturer_1d1c0ba0-a91e-4927-af79-6d8d27e0646b": [
+		("Bonus", "Infusion_Elite")
+	],
+	"S_FTJ_SW_Witch_4014aee0-56f1-47e0-a8eb-89c4b5a1da83": [
+		("Talents", "Elite")
+	],
+	"S_GLO_PurgedDragon_c099caa6-1938-4b4f-9365-d0881c611e71": [
+		("Immunities", "Immunity"),
+		("Bonus", "Infusion_Elite"),
+		("Bonus", "Special"),
+	],
+	"S_RC_DW_SourceLich_Stronger_2c8d84ef-bfd0-4ff7-93fe-b3728d05ee87": [
+		("Immunities", "Immunity"),
+		("Buffs", "Elite"),
+	],
+	"S_RC_BF_Ferryman_6d4270d3-2f01-4674-8668-396ac0a4c703": [
+		("Immunities", "Immunity")
+	],
+	"S_CoS_Temples_Orc_CampBlackRing_Captain_1eceaf90-79a6-4d36-9360-975f1464b0e3": [
+		("Auras", "Auras_Main")
+	],
+}
+
 def export(key, level_data):
 	output_str = file_top
 	bosses = list([x for x in level_data if x.default_state == 0 and (x.boss == True or has_elite_tag(x, key) or has_elite_treasure(x, key))])
@@ -247,7 +289,12 @@ def export(key, level_data):
 			if character.boss:
 				bonus_comment = "// Boss: {}\n".format(character.display_name)
 			output_str += bonus_comment
-			output_str += entry_template.format(level=key, id=character.id)
+			if character.id in guaranteed_upgrades.keys():
+				for upgrade_group,upgrade_type in guaranteed_upgrades[character.id]:
+					output_str += entry_template2.format(level=key, id=character.id, 
+					group=upgrade_group, type=upgrade_type)
+			else:
+				output_str += entry_template.format(level=key, id=character.id)
 
 	if output_str != "":
 		output_path = script_dir.joinpath("Generated_CharacterData").joinpath("Bosses_{}.txt".format(key))
