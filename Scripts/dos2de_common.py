@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List, Dict
+import uuid
 
 def export_file(path, contents):
     try:
@@ -43,3 +44,6 @@ def GetEnglishLocalization(path:str)-> Dict[str,str]:
         except Exception as e:
             print("Error parsing content node: \n{}".format(e))
     return english_entries
+
+def NewUUID()->str:
+    return str(uuid.uuid4())
