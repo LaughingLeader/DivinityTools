@@ -98,9 +98,15 @@ if resource_list_path.exists():
 		uuid = obj[1]
 		resource_uuids[name] = uuid
 
+def ignore_entry(entryname:str, ignorelist:List[str]):
+	if ignorelist is not None:
+		for x in ignorelist:
+			if x in entryname:
+				return True
+	return False
 
 #ui_txt = Path("D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/UI.txt")
-def ParseBankFile(path:str, nameprefix="LeaderLib_")->List[SoundEntry]:
+def ParseBankFile(path:str, projectname="LeaderLib", nameprefix="", ignored:List[str]=None, renaming:List[tuple]=None)->List[SoundEntry]:
 	print("Reading file '{}'".format(path))
 	f = open(path, 'r', encoding='utf-8')
 	lines = f.readlines()
@@ -111,18 +117,24 @@ def ParseBankFile(path:str, nameprefix="LeaderLib_")->List[SoundEntry]:
 	for line in lines:
 		obj = tuple(line.strip().split("\t"))
 		entry = SoundEntry().FromTuple(obj)
-		if not entry.name in base_entries.keys():
-			entry.displayname = nameprefix + entry.name
-			sound_entries.append(entry)
-			if entry.displayname in resource_uuids.keys():
-				entry.resourceuuid = resource_uuids[entry.displayname]
+		if not entry.name in base_entries.keys() and ignore_entry(entry.name, ignored) == False:
+			if nameprefix in entry.name:
+				entry.displayname = "{}_{}".format(projectname, entry.name)
 			else:
-				resource_uuids[entry.displayname] = entry.resourceuuid
+				entry.displayname = "{}_{}_{}".format(projectname, nameprefix, entry.name)
+			if renaming is not None:
+				for target,replace in renaming:
+					entry.displayname = entry.displayname.replace(target, replace)
+			sound_entries.append(entry)
+			if entry.name in resource_uuids.keys():
+				entry.resourceuuid = resource_uuids[entry.name]
+			else:
+				resource_uuids[entry.name] = entry.resourceuuid
 		else:
 			#print("Sound event already used in a Shared asset: {}".format(entry))
 			pass
 
-	sound_entries.sort(key=lambda x: x.name, reverse=False)
+	sound_entries.sort(key=lambda x: x.displayname, reverse=False)
 	return sound_entries
 #print("Loaded sound entries: {}".format("\n".join([str(x) for x in sound_entries])))
 
@@ -145,10 +157,10 @@ bank_files = [
 	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Items_Containers.txt",
 	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Items_Inventory.txt",
 	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Items_Objects.txt",
-	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Music.txt",
-	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Music_GM.txt",
+	#"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Music.txt",
+	#"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Music_GM.txt",
 	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Player.txt",
-	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Rumble.txt",
+	#"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Rumble.txt",
 	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Scripted.txt",
 	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Skills.txt",
 	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/Status_FX.txt",
@@ -160,6 +172,15 @@ bank_files = [
 	"D:/Modding/DOS2DE_Extracted/Public/Shared/Assets/Sound/z_TESTS.txt",
 ]
 
+ignored_names = [
+	"Switch_Skill"
+]
+
+replace_text = [
+	("Items_Inventory_Inventory", "Items_Inventory"),
+	("Items_Objects_Items_Puzzles", "Items_Puzzles")
+]
+
 conversion_export = Path("G:/Divinity Original Sin 2/DefEd/Data/Public/LeaderLib_543d653f-446c-43d8-8916-54670ce24dd9/Content/LeaderLib_Sounds/Shared")
 divine_path = Path("G:/Modding/DOS2DE/ConverterApp/divine.exe")
 
@@ -168,7 +189,7 @@ for s in bank_files:
 	if path.exists():
 		bankpath = Path(s.replace("D:/Modding/DOS2DE_Extracted/", "")).with_suffix(".bnk")
 		bankname = path.stem
-		sound_entries = ParseBankFile(path.absolute(), "LeaderLib_" + bankname + "_")
+		sound_entries = ParseBankFile(path.absolute(), "LeaderLib" , bankname, ignored_names, replace_text)
 
 		pak_folder_export = conversion_export.joinpath("[PAK]_{}".format(bankname))
 
@@ -216,7 +237,8 @@ for s in bank_files:
 resource_list_str = "Name\tUUID\n"
 i = 0
 count = len(resource_uuids) - 1
-for displayname,uuid in resource_uuids.items():
+for displayname in sorted(resource_uuids):
+	uuid = resource_uuids[displayname]
 	resource_list_str += "{}\t{}".format(displayname, uuid)
 	if i < count:
 		resource_list_str += "\n"
