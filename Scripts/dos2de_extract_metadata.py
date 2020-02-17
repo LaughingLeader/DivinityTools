@@ -78,9 +78,12 @@ for p in metafiles:
 
 output_str = ""
 
-for data in sorted(metadata, key=lambda x: {x.name}):
-	output_str += 'new DivinityModData{{ Name = \"{}\", UUID = \"{}\", Folder=\"{}\", Version=DivinityModVersion.FromInt({}), Type=\"{}\", Targets=\"{}\", Author=\"Larian\", Description=\"{}\", MD5=\"{}\"}},\n'.format(data.name, data.uuid, data.folder, data.version, data.mod_type, data.target, data.description, data.md5)
-	print(output_str)
+csharp_template = 'new DivinityModData{{ Name = \"{}\", UUID = \"{}\", Folder=\"{}\", Version=DivinityModVersion.FromInt({}), Type=\"{}\", Targets=\"{}\", Author=\"Larian\", Description=\"{}\", MD5=\"{}\"}},\n'
 
+lua_template = '["{}"] = true,--{}\n'
+
+for data in sorted(metadata, key=lambda x: {x.name}):
+	#output_str += csharp_template.format(data.name, data.uuid, data.folder, data.version, data.mod_type, data.target, data.description, data.md5)
+	output_str += lua_template.format(data.uuid, data.name)
 import pyperclip
-pyperclip.copy(output_str)
+pyperclip.copy(output_str.strip())
