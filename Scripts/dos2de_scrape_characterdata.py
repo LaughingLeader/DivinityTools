@@ -5,8 +5,8 @@ import glob
 import dos2de_common as Common
 from typing import List, Dict
 
-file_top = "Name\tUUID\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tIsBoss\tDefault State\n"
-data_template = '{name}\t{id}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{boss}\t{default_state}\n'
+file_top = "Name\tUUID\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tIsBoss\tSkills\tDefault State\n"
+data_template = '{name}\t{id}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{boss}\t{skills}\t{default_state}\n'
 entry_template = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id});\n'
 entry_template2 = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id}, "{group}", "{type}");\n'
 #file_top = "UUID\tName\tAlignment\tDialog\tDefault State\tIsBoss\tTags\n"
@@ -47,6 +47,7 @@ class Character():
 		self.stats = ""
 		self.trade_treasure:List[str] = []
 		self.treasure:List[str] = []
+		self.skills:List[str] = []
 
 	def parse(self, xmlobj):
 		default_state = get_attribute(xmlobj, "DefaultState")
@@ -99,7 +100,13 @@ class Character():
 		for x in treasure_xml:
 			treasure_name = get_attribute(x, "TreasureItem")
 			if treasure_name is not None and treasure_name != "":
-				self.treasure.append(treasure_name)
+				self.treasure.append(treasure_name)	
+			
+		skills_xml = list(xmlobj.find_all("node", attrs={"id":"Skill"}))
+		for x in skills_xml:
+			skill_name = get_attribute(x, "Skill")
+			if skill_name is not None and skill_name != "":
+				self.skills.append(skill_name)
 
 	def copy(self, obj, prop):
 		try:
@@ -162,7 +169,7 @@ class Character():
 
 		return data_template.format(id=self.id, name=self.display_name,
 			boss=self.boss,alignment=self.alignment,dialog=self.defaultdialog,stats=self.stats,
-				tags=self.export_list(self.tags),default_state=self.get_default_state(),
+				tags=self.export_list(self.tags),skills=self.export_list(self.skills), default_state=self.get_default_state(),
 					treasure=treasure_export,trade_treasure=trade_treasure_export)
 
 def get_attribute(xml, id):
