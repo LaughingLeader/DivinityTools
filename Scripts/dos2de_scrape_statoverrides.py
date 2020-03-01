@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 import dos2de_common as common
 import re
+from bs4 import BeautifulSoup
+
 check_file_names = [
 	"Character",
 	#"Data",
@@ -60,7 +62,12 @@ FORBIDDEN = [
 script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(script_dir)
 
-modifiers_path = Path("D:\Modding\DOS2DE_Extracted\Public\Shared\Stats\Generated\Structure\Modifiers.txt")
+# PATHWAYS
+data_folder = Path("D:\Modding\DOS2DE_Extracted\Public\Shared\Stats\Generated\Data")
+origins_folder = Path("D:\Modding\DOS2DE_Extracted\Public\DivinityOrigins_1301db3d-1f54-4e98-9be5-5094030916e4\Stats\Generated\Data")
+mod_folder = Path("D:\Modding\DOS2DE_Mods\Kalavinkas_Combat_Enhanced_e844229e-b744-4294-9102-a7362a926f71\Public\Kalavinkas_Combat_Enhanced_e844229e-b744-4294-9102-a7362a926f71\Stats\Generated\Data")
+statobdefinitins_path = Path("G:\Divinity Original Sin 2\DefEd\Data\Editor\Config\Stats\StatObjectDefinitions.sod")
+
 modifiers = {}
 
 class Modifier():
@@ -104,8 +111,6 @@ def get_attribute(node, id, fallback):
 	except: pass
 	return fallback
 
-statobdefinitins_path = Path("G:\Divinity Original Sin 2\DefEd\Data\Editor\Config\Stats\StatObjectDefinitions.sod")
-from bs4 import BeautifulSoup
 def build_statdefinitions(file_path, debug=False):
 	print("Reading file '{}'".format(file_path))
 	f = open(file_path, 'r')
@@ -171,11 +176,6 @@ def build_modifiers(file_path, debug=True):
 					if debug: print("Parsing modifier type {}".format(type_name))
 
 build_statdefinitions(statobdefinitins_path)
-#build_modifiers(modifiers_path)
-
-data_folder = Path("D:\Modding\DOS2DE_Extracted\Public\Shared\Stats\Generated\Data")
-origins_folder = Path("D:\Modding\DOS2DE_Extracted\Public\DivinityOrigins_1301db3d-1f54-4e98-9be5-5094030916e4\Stats\Generated\Data")
-mod_folder = Path("D:\Modding\DOS2DE_Mods\Kalavinkas_Combat_Enhanced_e844229e-b744-4294-9102-a7362a926f71\Public\Kalavinkas_Combat_Enhanced_e844229e-b744-4294-9102-a7362a926f71\Stats\Generated\Data")
 
 all_game_files = list(data_folder.glob("*.txt"))
 all_origins_files = list(origins_folder.glob("*.txt"))
@@ -440,7 +440,7 @@ for file in mod_file_data.values():
 	if output_str != "":
 		common.export_file(dir_output.joinpath("{}.txt".format(file.name)), output_str)
 
-stats_tsv = open("G:\Modding\DOS2DE\Projects_Source\DivinityTools\Scripts\Generated_Localization\Stats.tsv", 'r')
+stats_tsv = open(script_dir.joinpath("Generated_Localization").joinpath("Stats.tsv"), 'r')
 lines = stats_tsv.readlines()
 stats_tsv.close()
 lines.pop(0)
