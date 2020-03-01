@@ -77,7 +77,7 @@ class SoundbankEvent():
 		self.name = str(get_attribute(node, "Name"))
 		atten = get_attribute(node, "MaxAttenuation")
 		if atten == None:
-			atten = 60.0
+			atten = 0.0
 		self.attenuation = to_float(atten)
 		self.duration_min = to_float(get_attribute(node, "DurationMin"))
 		self.duration_max = to_float(get_attribute(node, "DurationMax"))
