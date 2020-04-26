@@ -104,8 +104,10 @@ output_dir = get_arg(2, None)
 if input_dir != None and output_dir != None:
 	input_dir = Path(input_dir)
 	output_dir = Path(output_dir)
+	
+	output_dir.mkdir(parents=True, exist_ok=True)
 
-	soundbanks_files = list(input_dir.glob("*.bnk"))
+	soundbanks_files = list(input_dir.rglob("*.bnk"))
 	main_soundbank = next(iter([x for x in soundbanks_files if x.stem != "Init"]))
 
 	soundbanks_xml_path = input_dir.joinpath("SoundbanksInfo.xml")
@@ -144,7 +146,7 @@ if input_dir != None and output_dir != None:
 			if export_file(soundbanks_lsx_path, soundsbanks_str):
 				print("Wrote '{}'.".format(soundbanks_lsx_path))
 		
-		wem_files = list(input_dir.glob("*.wem"))
+		wem_files = list(input_dir.rglob("*.wem"))
 		for f in wem_files:
 			shutil.copy(f.absolute(), output_dir.joinpath(f.name))
 		print("Copied '{}' .wem files to output folder.".format(len(wem_files)))

@@ -1,12 +1,12 @@
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup,Tag
 import os
 from pathlib import Path
 import glob
 import dos2de_common as Common
 from typing import List, Dict
 
-file_top = "Name\tUUID\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tIsBoss\tSkills\tDefault State\n"
-data_template = '{name}\t{id}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{boss}\t{skills}\t{default_state}\n'
+file_top = "Name\tUUID\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tSkills\tScripts\tIsBoss\tDefault State\n"
+data_template = '{name}\t{id}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{skills}\t{scripts}\t{boss}\t{default_state}\n'
 entry_template = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id});\n'
 entry_template2 = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id}, "{group}", "{type}");\n'
 #file_top = "UUID\tName\tAlignment\tDialog\tDefault State\tIsBoss\tTags\n"
@@ -48,6 +48,7 @@ class Character():
 		self.trade_treasure:List[str] = []
 		self.treasure:List[str] = []
 		self.skills:List[str] = []
+		self.scripts:List[str] = []
 
 	def parse(self, xmlobj):
 		default_state = get_attribute(xmlobj, "DefaultState")
@@ -89,6 +90,12 @@ class Character():
 			tag_name = get_attribute(x, "Object")
 			if tag_name is not None and tag_name != "" and not tag_name in self.tags:
 				self.tags.append(tag_name)
+
+		scripts_xml = list(xmlobj.find_all("node", attrs={"id":"Scripts"}))
+		for x in scripts_xml:
+			scripts_name = get_attribute(x, "Script")
+			if scripts_name is not None and scripts_name != "" and not scripts_name in self.scripts:
+				self.scripts.append(scripts_name)
 		
 		trade_treasure_xml = list(xmlobj.find_all("node", attrs={"id":"TradeTreasures"}))
 		for x in trade_treasure_xml:
@@ -345,6 +352,8 @@ for p in template_lsx_files:
 	lsx_xml = BeautifulSoup(f.read(), 'lxml')
 	f.close()
 
+	game_objects:List[Tag]
+
 	game_objects = list(lsx_xml.find_all("node", attrs={"id":"GameObjects"}))
 	for obj in game_objects:
 		root_type = get_attribute(obj, "Type")
@@ -355,7 +364,7 @@ for p in template_lsx_files:
 
 data_dir = Path("G:/Modding/DOS2DE/Projects_Source/DivinityTools/Scripts/_Data_Characters")
 lsx_files = list(data_dir.rglob("*.lsx"))
-all_levels = {}
+all_levels:Dict[str, List[Character]] = {}
 
 for p in lsx_files:
 	level_name = p.parent.name
@@ -363,7 +372,7 @@ for p in lsx_files:
 	if not level_name in all_levels.keys():
 		all_levels[level_name] = []
 
-	level_data = all_levels[level_name]
+	level_data:List[Character] = all_levels[level_name]
 
 	lsx_path = p
 	print("Reading file '{}'".format(lsx_path))

@@ -3,6 +3,7 @@ from pathlib import Path
 import dos2de_common as common
 import re
 from bs4 import BeautifulSoup
+from typing import List, Dict
 
 check_file_names = [
 	"Character",
@@ -264,7 +265,7 @@ def parse_file(file_path, debug=False):
 	return current_file
 
 game_file_data = []
-mod_file_data = {}
+mod_file_data:Dict[str, StatFile] = {}
 
 for file_path in game_files:
 	result = parse_file(file_path, False)
