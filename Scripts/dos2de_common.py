@@ -3,7 +3,6 @@ from typing import List, Dict
 import uuid
 from numpy import int32
 import sys
-from faker import Faker
 
 def GetArg(arg:int, fallback:any)->any:
 	if len(sys.argv) > arg:
@@ -62,6 +61,7 @@ def NewHandle()->str:
     return "h"+str.replace(str(uuid.uuid4()), "-", "g")
 
 def NewHandleFromSeed(seed)->str:
+    from faker import Faker
     f1 = Faker()
     Faker.seed(seed)
     return "h"+str.replace(str(f1.uuid4()), "-", "g")

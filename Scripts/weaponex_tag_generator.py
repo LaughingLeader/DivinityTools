@@ -9,37 +9,37 @@ os.chdir(script_dir)
 
 tags = [
 	#("LLGRIMOIRE_Grimoire", "Grimoire"),
-	("LLWEAPONEX_Axe", "Axe", None),
-	("LLWEAPONEX_Banner", "Banner", None),
-	("LLWEAPONEX_BattleBook", "Battle Book", "a Book"),
+	("LLWEAPONEX_Axe", "Axe", None, "#F5785A"),
+	("LLWEAPONEX_Banner", "Banner", None, "#00FF7F"),
+	("LLWEAPONEX_BattleBook", "Battle Book", "a Book", "#22AADD"),
 	#("LLWEAPONEX_Blunderbuss", "Blunderbuss"),
-	("LLWEAPONEX_Blunt", "Blunt Weapon", None),
-	("LLWEAPONEX_Bow", "Bow", None),
-	#("LLWEAPONEX_CombatShield", ""),
-	("LLWEAPONEX_Crossbow", "Crossbow", None),
-	("LLWEAPONEX_Dagger", "Dagger", None),
-	("LLWEAPONEX_DualShields", "Dual Shields", "Dual Shields"),
-	("LLWEAPONEX_Firearm", "Firearm", None),
-	("LLWEAPONEX_Glaive", "Glaive", None),
-	("LLWEAPONEX_Greatbow", "Greatbow", None),
-	("LLWEAPONEX_Halberd", "Halberd", None),
-	("LLWEAPONEX_HandCrossbow", "Hand Crossbow", None),
-	("LLWEAPONEX_Katana", "Katana", None),
-	("LLWEAPONEX_Pistol", "Pistol", None),
-	("LLWEAPONEX_Polearm", "Polearm", None),
-	("LLWEAPONEX_Quarterstaff", "Quarterstaff", None),
-	("LLWEAPONEX_Rapier", "Rapier", None),
-	("LLWEAPONEX_Rod", "Rod", None),
-	("LLWEAPONEX_Runeblade", "Runeblade", None),
-	("LLWEAPONEX_Scythe", "Scythe", None),
-	("LLWEAPONEX_Shield", "Shield", None),
-	("LLWEAPONEX_Spear", "Spear", None),
-	("LLWEAPONEX_Staff", "Arcane Staff", "a Staff"),
-	("LLWEAPONEX_Sword", "Sword", None),
+	("LLWEAPONEX_Bludgeon", "Bludgeon", None, "#FFE7AA"),
+	("LLWEAPONEX_Bow", "Bow", None, "#72EE34"),
+	#("LLWEAPONEX_CombatShield", "#"),
+	("LLWEAPONEX_Crossbow", "Crossbow", None, "#81E500"),
+	("LLWEAPONEX_Dagger", "Dagger", None, "#5B40FF"),
+	("LLWEAPONEX_DualShields", "Dual Shields", "Dual Shields", "#D9D9D9"),
+	("LLWEAPONEX_Firearm", "Firearm", None, "#FD8826"),
+	#("LLWEAPONEX_Glaive", "Glaive", None, "#FFAA29"),
+	("LLWEAPONEX_Greatbow", "Greatbow", None, "#00FF7F"),
+	#("LLWEAPONEX_Halberd", "Halberd", None, "#CCFF55"),
+	("LLWEAPONEX_HandCrossbow", "Hand Crossbow", None, "#FF33FF"),
+	("LLWEAPONEX_Katana", "Katana", None, "#FF2D2D"),
+	("LLWEAPONEX_Pistol", "Pistol", None, "#FF337F"),
+	("LLWEAPONEX_Polearm", "Polearm", None, "#FFCF29"),
+	("LLWEAPONEX_Quarterstaff", "Quarterstaff", None, "#FD8826"),
+	("LLWEAPONEX_Rapier", "Rapier", None, "#F8FF2D"),
+	#("LLWEAPONEX_Rod", "Rod", None, "#B658FF"),
+	("LLWEAPONEX_Runeblade", "Runeblade", None, "#40E0D0"),
+	("LLWEAPONEX_Scythe", "Scythe", None, "#AA11CC"),
+	("LLWEAPONEX_Shield", "Shield", None, "#AE9F95"),
+	#("LLWEAPONEX_Spear", "Spear", None, "#FFCF29"),
+	("LLWEAPONEX_Staff", "Arcane Staff", "a Staff", "#2EFFE9"),
+	("LLWEAPONEX_Sword", "Sword", None, "#FF3E2A"),
 	#("LLWEAPONEX_Throwing", "Throwing "),
-	("LLWEAPONEX_ThrowingAbility", "Throwing Ability", "Throwing Ability"),
-	("LLWEAPONEX_Unarmed", "Unarmed", "Empty Hands"),
-	("LLWEAPONEX_Wand", "Wand", None),
+	("LLWEAPONEX_ThrowingAbility", "Throwing Ability", "Throwing Ability", "#40E0D0"),
+	("LLWEAPONEX_Unarmed", "Unarmed", "Empty Hands", "#FF44FF"),
+	("LLWEAPONEX_Wand", "Wand", None, "#B658FF"),
 ]
 
 def getValueLetter(i):
@@ -73,8 +73,16 @@ def createFile(outputFile:str, entryFunc):
 	output = entryFunc("Key\tContent\tHandle\n", handles)
 	Common.export_file(outputFilePath, output.strip())
 
+lua_template = """
+MasteryRankTagText = {{
+{tags}
+}}"""
+lua_entry_template = "{tag} = TranslatedString:Create(\"{handle}\",\"{content}\"),\n"
+
+luaEntries = []
+
 def createMasteryTags(output,handles):
-	for tag,name,equippedText in tags:
+	for tag,name,equippedText,color in tags:
 		for i in range(5):
 			rank = i + 1
 			letter = getValueLetter(rank)
@@ -85,13 +93,23 @@ def createMasteryTags(output,handles):
 					handle = handles[tagName]
 				else:
 					handle = handle = Common.NewHandle()
-				output += "{}\t{} {}\t{}\n".format(tagName, name + " Mastery", letter, handle)
+				content = "<font color='{}'>{} Mastery {}</font>".format(color,name,letter)
+				output += "{}\t{}\t{}\n".format(tagName, content, handle)
+				luaEntries.append(lua_entry_template.format(tag=tagName, handle=handle, content=content))
 	return output
 
 createFile("WeaponExpansion_Generated/LLWEAPONEX_Tags_MasteryRanks.tsv", createMasteryTags)
 
+allLuaEntries = ""
+for entry in luaEntries:
+	allLuaEntries += entry
+
+luaOutput = lua_template.format(tags=allLuaEntries)
+outputFilePath = script_dir.joinpath("WeaponExpansion_Generated/LLWEAPONEX_Tags.lua")
+Common.export_file(outputFilePath, luaOutput.strip())
+
 def createEquipmentTags(output,handles):
-	for tag,name,equippedText in tags:
+	for tag,name,equippedText,color in tags:
 		tagName = "{}_Equipped".format(tag)
 		handle = ""
 		if tagName in handles.keys():
@@ -103,14 +121,3 @@ def createEquipmentTags(output,handles):
 		output += "{}\t{}\t{}\n".format(tagName, equippedText, handle)
 	return output
 createFile("WeaponExpansion_Generated/LLWEAPONEX_Tags_WeaponRequirement.tsv", createEquipmentTags)
-
-# output = "Key\tContent\tHandle\n"
-# for tag,name in tags:
-# 	for i in range(5):
-# 		rank = i + 1
-# 		letter = getValueLetter(rank)
-# 		if letter is not None:
-# 			tagName = "{}_Mastery{}".format(tag,rank)
-# 			handle = Common.NewHandle()
-# 			output += "{}\t{} {}\t{}\n".format(tagName, name, letter, handle)
-# Common.export_file(script_dir.joinpath("WeaponExpansion_Generated/LLWEAPONEX_Tags_EquippedWeapons.tsv"), output.strip())
