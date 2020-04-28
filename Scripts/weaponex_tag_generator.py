@@ -98,14 +98,14 @@ def createMasteryTags(output,handles):
 				luaEntries.append(lua_entry_template.format(tag=tagName, handle=handle, content=content))
 	return output
 
-createFile("WeaponExpansion_Generated/LLWEAPONEX_Tags_MasteryRanks.tsv", createMasteryTags)
+createFile("Generated_WeaponExpansion/LLWEAPONEX_Tags_MasteryRanks.tsv", createMasteryTags)
 
 allLuaEntries = ""
 for entry in luaEntries:
 	allLuaEntries += entry
 
 luaOutput = lua_template.format(tags=allLuaEntries)
-outputFilePath = script_dir.joinpath("WeaponExpansion_Generated/LLWEAPONEX_Tags.lua")
+outputFilePath = script_dir.joinpath("Generated_WeaponExpansion/LLWEAPONEX_Tags.lua")
 Common.export_file(outputFilePath, luaOutput.strip())
 
 def createEquipmentTags(output,handles):
@@ -120,4 +120,4 @@ def createEquipmentTags(output,handles):
 			equippedText = "a " + name
 		output += "{}\t{}\t{}\n".format(tagName, equippedText, handle)
 	return output
-createFile("WeaponExpansion_Generated/LLWEAPONEX_Tags_WeaponRequirement.tsv", createEquipmentTags)
+createFile("Generated_WeaponExpansion/LLWEAPONEX_Tags_WeaponRequirement.tsv", createEquipmentTags)
