@@ -20,21 +20,22 @@ class MasteryRank():
         self.color = color
         self.name = name
         self.keyName = "{}Rank{}".format(masteryName, level)
-        self.text = "<font color='{}'>{}</font>".format(self.color,self.name)
+        #self.text = "<font color='{}'>{}</font>".format(self.color,self.name)
+        self.text = self.name
         if self.keyName in handles.keys():
             self.handle = handles[self.keyName]
         else:
             self.handle = Common.NewHandle()
             handles[self.keyName] = self.handle
         self.localeOutput = "{}\t{}\t{}\n".format(self.keyName, self.text, self.handle)
-        self.luaOutput = "\t[{}] = TranslatedString:Create(\"{}\", \"{}\"),\n".format(self.level, self.handle, self.text)
+        self.luaOutput = "\t[{}] = {{Name = TranslatedString:Create(\"{}\", \"{}\"), Color=\"{}\"}},\n".format(self.level, self.handle, self.text, self.color)
 
 class Mastery():
     def __init__(self, masteryID, name, color, requirementText=None):
         global masteries
         global handles
         self.masteryID = masteryID
-        self.name = name + " Mastery"
+        self.name = name
         self.color = color
         self.ranks:Dict[int,MasteryRank] = {}
         if self.masteryID in handles.keys():
@@ -42,7 +43,7 @@ class Mastery():
         else:
             self.handle = Common.NewHandle()
             handles[self.masteryID] = self.handle
-        self.localizedName = "<font color='{}'>{}</font>".format(self.color, self.name)
+        self.localizedName = self.name#"<font color='{}'>{}</font>".format(self.color, self.name)
         self.requirementText = requirementText
         masteries[masteryID] = self
 
@@ -56,7 +57,7 @@ class Mastery():
         return masteryOutput.strip() + "\n"
     
     def ExportLua(self):
-        luaOutput = "[\"{id}\"] = MasteryData:Create(\"{id}\", TranslatedString:Create(\"{handle}\", \"{name}\"), {{\n".format(id=self.masteryID, name=self.localizedName, handle=self.handle)
+        luaOutput = "[\"{id}\"] = MasteryData:Create(\"{id}\", TranslatedString:Create(\"{handle}\", \"{name}\"), \"{color}\", {{\n".format(id=self.masteryID, name=self.localizedName, color=self.color, handle=self.handle)
         for level,rank in self.ranks.items():
             luaOutput += rank.luaOutput
         luaOutput += "}),\n"
@@ -111,7 +112,7 @@ Mastery("LLWEAPONEX_Scythe", "Scythe", "#AA11CC")
 Mastery("LLWEAPONEX_Shield", "Shield", "#AE9F95")
 Mastery("LLWEAPONEX_Staff", "Arcane Staff", "#2EFFE9", "a Staff")
 Mastery("LLWEAPONEX_Sword", "Sword", "#FF3E2A")
-Mastery("LLWEAPONEX_ThrowingAbility", "Throwing Ability", "#40E0D0", "Throwing Ability")
+Mastery("LLWEAPONEX_ThrowingAbility", "Throwing", "#40E0D0", "Throwing Ability")
 Mastery("LLWEAPONEX_Unarmed", "Unarmed", "#FF44FF", "Empty Hands")
 Mastery("LLWEAPONEX_Wand", "Wand", "#B658FF")
 
@@ -159,7 +160,7 @@ AddRank("LLWEAPONEX_Firearm", 0, "#FDC89B", "Beginner")
 AddRank("LLWEAPONEX_Firearm", 1, "#FBBC7F", "Novice")
 AddRank("LLWEAPONEX_Firearm", 2, "#F5A36C", "Journeyman Firearm Enthusiast")
 AddRank("LLWEAPONEX_Firearm", 3, "#F49C4E", "Expert Firearm Lunatic")
-AddRank("LLWEAPONEX_Firearm", 4, "#FF9D33", "Master of Firearms, Destruction Supreme")
+AddRank("LLWEAPONEX_Firearm", 4, "#FF9D33", "Master of Firearms")
 AddRank("LLWEAPONEX_Greatbow", 0, "#FDFFEA", "Beginner")
 AddRank("LLWEAPONEX_Greatbow", 1, "#DDFFB3", "Novice")
 AddRank("LLWEAPONEX_Greatbow", 2, "#94E963", "Journeyman Slayer")
@@ -236,10 +237,8 @@ AddRank("LLWEAPONEX_Wand", 2, "#C596FE", "Journeyman of Wands")
 AddRank("LLWEAPONEX_Wand", 3, "#B274FF", "Expert of Wands")
 AddRank("LLWEAPONEX_Wand", 4, "#D258FF", "Master Wandweaver")
 
-tsvOutput = "Key\tContent\tHandle\n"
+tsvOutput = "Key\tContent\tHandle\nLLWEAPONEX_Mastery\tMastery\thd84bd8c4gb25fg46bagbbf9ga3d43b8bfacc\n"
 luaOutput = """
-local MasteryData = Ext.Require("Shared/Data/MasteryData_Classes.lua")
-
 ---@class TranslatedString
 local TranslatedString = LeaderLib.Classes["TranslatedString"]
 
