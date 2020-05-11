@@ -19,7 +19,7 @@ class MasteryRank():
         self.level = level
         self.color = color
         self.name = name
-        self.keyName = "{}Rank{}".format(masteryName, level)
+        self.keyName = "{}_Rank{}_DisplayName".format(masteryName, level)
         #self.text = "<font color='{}'>{}</font>".format(self.color,self.name)
         self.text = self.name
         if self.keyName in handles.keys():
@@ -110,7 +110,7 @@ Mastery("LLWEAPONEX_Rapier", "Rapier", "#00FF7F")
 Mastery("LLWEAPONEX_Runeblade", "Runeblade", "#40E0D0")
 Mastery("LLWEAPONEX_Scythe", "Scythe", "#AA11CC")
 Mastery("LLWEAPONEX_Shield", "Shield", "#AE9F95")
-Mastery("LLWEAPONEX_Staff", "Arcane Staff", "#2EFFE9", "a Staff")
+Mastery("LLWEAPONEX_Staff", "Staff", "#2EFFE9", "a Staff")
 Mastery("LLWEAPONEX_Sword", "Sword", "#FF3E2A")
 Mastery("LLWEAPONEX_ThrowingAbility", "Throwing", "#40E0D0", "Throwing Ability")
 Mastery("LLWEAPONEX_Unarmed", "Unarmed", "#FF44FF", "Empty Hands")

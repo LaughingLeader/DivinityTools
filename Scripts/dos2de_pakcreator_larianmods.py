@@ -53,7 +53,6 @@ for name in larianmod_names:
         shutil.copytree(publicpath.absolute(), publicfolder)
 
         divine_str = str(divine_path.absolute())
-
         temp_folder_str = str(tempfolder.absolute())
 
         p = subprocess.run([divine_str, 
