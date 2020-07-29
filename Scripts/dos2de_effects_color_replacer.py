@@ -42,8 +42,10 @@ class Color():
 
 #startpath = Path('G:/Divinity Original Sin 2/DefEd/Data/Editor/Mods/ZZZ_GreenNecroFire_0bc91e73-ce14-4d3f-934c-3024a8ba348d/Assets/Effects')
 #startpath = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\WeaponExpansion_c60718c3-ba22-4702-9c5d-5ad92b41ba5f\Assets\Effects')
-startpath = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\ZZZ_PurpleNecrofire_c46b8710-e5f5-45f5-9485-a3993e11c951\Assets\Effects')
-bacupfolder = Path('D:\Modding\DOS2DE\Projects_Source\PurpleNecrofire\Effects_Recolor_Backup')
+#startpath = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\ZZZ_PurpleNecrofire_c46b8710-e5f5-45f5-9485-a3993e11c951\Assets\Effects')
+#bacupfolder = Path('D:\Modding\DOS2DE\Projects_Source\PurpleNecrofire\Effects_Recolor_Backup')
+startpath = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\WeaponExpansion_c60718c3-ba22-4702-9c5d-5ad92b41ba5f\Assets\Effects\_Rename')
+bacupfolder = Path('G:\Divinity Original Sin 2\DefEd\Data\Editor\Mods\WeaponExpansion_c60718c3-ba22-4702-9c5d-5ad92b41ba5f\Assets\Effects\_Rename\Backup')
 color_prop_id = {}
 color_prop_id['particles'] = '93b34a52-eef2-4f88-80f6-19e3126188ca'
 color_prop_id['light'] = '16caf8e6-d471-43da-b704-c845b1437927'
@@ -133,6 +135,12 @@ def swap_blue_to_red(color):
         color.b = r
     return color
 
+def to_black(color):
+    color.r = 0
+    color.g = 0
+    color.b = 0
+    return color
+
 def load_colors(file, colors):
     f = open(file, 'r', encoding='utf-8')
     contents = f.read()
@@ -158,7 +166,8 @@ def load_colors(file, colors):
             if not c.int in color_remap:
                 recolor = Color(c.int)
                 #recolor = swap_green_to_blue(recolor)
-                recolor = swap_red_to_purple(recolor)
+                #recolor = swap_red_to_purple(recolor)
+                recolor = to_black(recolor)
                 #recolor = swap_blue_to_red(recolor)
                 color_remap[c.to_hex()] = recolor
         
@@ -173,11 +182,13 @@ def load_colors(file, colors):
         Path.mkdir(backup_dir, parents=True, exist_ok=True)
         export_file(backup_dir.joinpath(file_path.name), contents)
 
-        target = Path(file_path.with_name(file_path.stem.replace("RS3", "LLPURPLEFIRE")).with_suffix(".lsefx"))
+        #target = Path(file_path.with_name(file_path.stem.replace("RS3", "LLPURPLEFIRE")).with_suffix(".lsefx"))
+        target = file_path
         if target.exists:
             export_dir = file_path.parent.joinpath("_Generated")
             Path.mkdir(export_dir, parents=True, exist_ok=True)
-            target = Path(export_dir.joinpath(file_path.name).with_name(file_path.stem.replace("RS3", "LLPURPLEFIRE")).with_suffix(".lsefx"))
+            #target = Path(export_dir.joinpath(file_path.name).with_name(file_path.stem.replace("RS3", "LLPURPLEFIRE")).with_suffix(".lsefx"))
+            target = Path(export_dir.joinpath(file_path.name).with_suffix(".lsefx"))
 
         export_file(target.absolute(), str(xml.prettify()))
 
@@ -214,9 +225,9 @@ class Root(Tk):
 #   c.a, c.r, c.g, c.b, c.to_hex().upper(),
 #       int32(c.to_int())))
 
-# effect_files = list(startpath.glob('*.lsefx'))
-# for f in effect_files:
-#     load_colors(f.absolute(), [])
+effect_files = list(startpath.glob('*.lsefx'))
+for f in effect_files:
+    load_colors(f.absolute(), [])
 
-win = Root()
-win.mainloop()
+#win = Root()
+#win.mainloop()

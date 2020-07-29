@@ -69,6 +69,7 @@ def convertFile(filePath:Path):
 			universal_newlines=True, 
 			stdout=subprocess.PIPE, 
 			stderr=subprocess.PIPE)
+		print("Converted {}.".format(filePath))
 
 try:
 	if len(sys.argv) > 1:

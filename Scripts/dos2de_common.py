@@ -14,7 +14,7 @@ def GetArg(arg:int, fallback:any)->any:
 def export_file(path, contents):
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        f = open(str(path.absolute()), 'w')
+        f = open(str(path.absolute()), 'w', encoding='utf-8')
         f.write(contents)
         f.close()
         return True

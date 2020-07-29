@@ -22,7 +22,7 @@ def parse(xmlobj):
 	if materialName != "":
 		name = materialName
 	uuid = get_attribute(xmlobj, "MapKey")
-	if uuid == "":
+	if uuid == "" or uuid == "-1":
 		uuid = get_attribute(xmlobj, "ID")
 	newName = "{}_{}".format(name, uuid)
 	return newName
