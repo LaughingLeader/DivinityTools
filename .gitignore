@@ -9,7 +9,10 @@ Scripts/__pycache__
 Scripts/_Data_Characters/
 Scripts/_Data_RootTemplates/
 Scripts/_Data*
+Scripts/WorkshopData/
 Scripts/Generated*
 Generated/
 *.spec
 *.dll
+*.txt
+*.bat
