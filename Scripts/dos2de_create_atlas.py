@@ -15,8 +15,7 @@ import numpy
 import time
 start_time = time.time()
 
-atlas_template = """
-<?xml version="1.0" encoding="UTF-8" ?>
+atlas_template = """<?xml version="1.0" encoding="UTF-8" ?>
 <save>
     <header version="2" />
     <version major="3" minor="6" revision="6" build="0" />

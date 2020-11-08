@@ -1,5 +1,8 @@
-class ExtraData():
-    def __init__(self):
+import os, sys
+from pathlib import Path
+
+class ExtraDataClass():
+    def Reset(self):
         setattr(self, "Flanked penalty", 10)
         setattr(self, "NPC max combat turn time", 20)
         setattr(self, "Painted surface status chance", 100)
@@ -257,6 +260,20 @@ class ExtraData():
         setattr(self, "TalentHumanCriticalChance", 5)
         setattr(self, "TalentSneakingAPCost", 1)
 
+    def __init__(self):
+        self.Reset()
+
+    def LoadFile(self, f:str):
+        key_pattern = '^.*?key\s*\"(.*?)\",\"(.*?)\"$'
+        import re
+        file = open(f, 'r')
+        datastr = file.read()
+        file.close()
+        keys = re.findall(key_pattern, datastr, re.IGNORECASE | re.MULTILINE)
+        for m in re.finditer(key_pattern, datastr, re.IGNORECASE | re.MULTILINE):
+            print(m.group(1), m.group(2))
+            setattr(self, m.group(1), float(m.group(2)))
+
 class ExtTable():
     def __init__(self):
-        self.ExtraData = ExtraData()
+        self.ExtraData = ExtraDataClass()

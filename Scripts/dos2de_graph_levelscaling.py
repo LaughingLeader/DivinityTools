@@ -1,8 +1,6 @@
 import os, sys
 from pathlib import Path
 import glob
-import dos2de_common as common
-import timeit
 import numpy as np
 import plotly.graph_objs as go
 import plotly.offline
@@ -32,11 +30,12 @@ class PlotlyViewer(QtWebEngineWidgets.QWebEngineView):
     def closeEvent(self, event):
         os.remove(self.file_path)
 
-import dos2de_extradata as ext
+from dos2de_extradata import ExtTable
+Ext = ExtTable()
 
-Ext = ext.ExtTable()
+armorMitDataFile = Path("G:\Divinity Original Sin 2\DefEd\Data\Public\ArmorMitigation_edf1898c-d375-47e7-919a-11d5d44d1cca\Stats\Generated\Data\Data.txt")
 
-def SetLoweredScale():
+def SetDivinityUnleashedScaling():
     global Ext
     Ext.ExtraData.VitalityLinearGrowth = 25
     Ext.ExtraData.VitalityStartingAmount = 175
@@ -56,7 +55,10 @@ def SetLoweredScale():
     Ext.ExtraData.FourthVitalityLeapGrowth = 1
     Ext.ExtraData.FourthVitalityLeapLevel = 18
 
-def GetVitalityExponential(level):
+def GetAttributeValue(level, base):
+    return (np.ceil((base - 1) / 100.0 * (Ext.ExtraData.AttributeLevelGrowth + Ext.ExtraData.AttributeBoostGrowth) * level) * Ext.ExtraData.AttributeGrowthDamp) + Ext.ExtraData.AttributeBaseValue
+
+def GetVitalityGrowth(level):
     expGrowth = Ext.ExtraData.VitalityExponentialGrowth
     growth = expGrowth ** (level - 1)
 
@@ -74,13 +76,28 @@ def GetVitalityExponential(level):
 
     return growth
 
-def GetVitalityBoostByLevel(level):
-    growth = GetVitalityExponential(level)
+def CalculateVitalityBoostByLevel(level):
+    growth = GetVitalityGrowth(level)
     vit = level * Ext.ExtraData.VitalityLinearGrowth + Ext.ExtraData.VitalityStartingAmount * growth
     return np.round(vit / 5.0) * 5.0
 
+def GetVitalityScalar(level, baseVitality):
+    vitalityBoost = np.round((level * Ext.ExtraData.VitalityLinearGrowth) + (Ext.ExtraData.VitalityStartingAmount * GetVitalityGrowth(level))) / 5 * 5.0
+    return vitalityBoost * baseVitality / 100
+
+def CalculateVitality(level, baseVitality, baseCon):
+    constitution = GetAttributeValue(level, baseCon)
+    vitFromCon = (constitution * Ext.ExtraData.VitalityBoostFromAttribute)
+    boostedVit = (vitFromCon + 1.0) * CalculateVitalityBoostByLevel(level)
+    boostedVitRnd = np.round(boostedVit)
+    vitFromCon10 = (constitution * Ext.ExtraData.VitalityBoostFromAttribute) + 1.0
+    vitBoostByLevel = CalculateVitalityBoostByLevel(level)
+    vitMultiplier = np.round(vitFromCon10 * vitBoostByLevel)
+    baseVitMul = np.round((baseVitality / 100.0) * vitMultiplier)
+    return baseVitMul
+
 def GetLevelScaledDamage(level):
-    vitalityBoost = GetVitalityBoostByLevel(level)
+    vitalityBoost = CalculateVitalityBoostByLevel(level)
     return vitalityBoost / (((level - 1) * Ext.ExtraData.VitalityToDamageRatioGrowth) + Ext.ExtraData.VitalityToDamageRatio)
 
 def GetAverageLevelDamage(level):
@@ -91,19 +108,13 @@ def GetLevelScaledWeaponDamage(level):
     scaledDmg = GetLevelScaledDamage(level)
     return scaledDmg / ((level * Ext.ExtraData.ExpectedDamageBoostFromWeaponAbilityPerLevel) + 1.0)
 
-def CalculateVitality(level, baseVitality):
-    vitalityBoost = np.round((level * Ext.ExtraData.VitalityLinearGrowth) + (Ext.ExtraData.VitalityStartingAmount * GetVitalityExponential(level))) / 5 * 5.0
-    return vitalityBoost * baseVitality / 100
-
 def CalculateArmorScaling(level, baseArmor):
-    armorScaling = (GetVitalityBoostByLevel(level) * ((Ext.ExtraData.AttributeBaseValue + level * Ext.ExtraData.ExpectedConGrowthForArmorCalculation - Ext.ExtraData.AttributeBaseValue) * Ext.ExtraData.VitalityBoostFromAttribute) + 1.0) * Ext.ExtraData.ArmorToVitalityRatio
+    armorScaling = (CalculateVitalityBoostByLevel(level) * ((Ext.ExtraData.AttributeBaseValue + level * Ext.ExtraData.ExpectedConGrowthForArmorCalculation - Ext.ExtraData.AttributeBaseValue) * Ext.ExtraData.VitalityBoostFromAttribute) + 1.0) * Ext.ExtraData.ArmorToVitalityRatio
     armor = np.ceil(armorScaling * baseArmor / 100)
     return armor
 
 def ScaledDamageFromPrimaryAttribute(primaryAttr):
     return (primaryAttr - Ext.ExtraData.AttributeBaseValue) * Ext.ExtraData.DamageBoostFromAttribute
-
-#SetLoweredScale()
 
 levels = []
 for i in range(Ext.ExtraData.SoftLevelCap+1):
@@ -112,7 +123,8 @@ for i in range(Ext.ExtraData.SoftLevelCap+1):
 def GetLevelVitalityData():
     v = []
     for i in range(Ext.ExtraData.SoftLevelCap+1):
-        v.append(CalculateVitality(i, 100))
+        v.append(GetVitalityScalar(i, 100))
+        #v.append(CalculateVitality(i, 100, 0))
     return v
 
 def GetLevelArmorData():
@@ -130,20 +142,36 @@ def GetAverageDamageData():
     return v
 
 fig = go.Figure()
-fig.add_trace(go.Scatter(
-    x=GetLevelVitalityData(),
-    y=levels,
-    name = 'Vitality', # Style name/legend entry with html tags
-    connectgaps=True # override default to connect the gaps
-))
-fig.add_trace(go.Scatter(
-    x=GetAverageDamageData(),
-    y=levels,
-    name='Average Level Damage',
-))
-fig.add_trace(go.Scatter(
-    x=GetLevelArmorData(),
-    y=levels,
-    name='Average Armor',
-))
+
+def AddLines(fig, label):
+    fig.add_trace(go.Scatter(
+        x=GetLevelVitalityData(),
+        y=levels,
+        name = 'Vitality' + label,
+        mode='lines+markers'
+    ))
+    fig.add_trace(go.Scatter(
+        x=GetAverageDamageData(),
+        y=levels,
+        name='Damage' + label,
+        mode='lines+markers'
+    ))
+    fig.add_trace(go.Scatter(
+        x=GetLevelArmorData(),
+        y=levels,
+        name='Armor' + label,
+        mode='lines+markers'
+    ))
+
+AddLines(fig, "")
+
+# SetDivinityUnleashedScaling()
+
+# AddLines(fig, " (DU)")
+
+Ext.ExtraData.Reset()
+Ext.ExtraData.LoadFile(armorMitDataFile.absolute())
+
+AddLines(fig, " (AM)")
+
 win = PlotlyViewer(fig)

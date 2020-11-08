@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup,Tag
 import os
 from pathlib import Path
 import glob
-import dos2de_common as Common
 from typing import List, Dict
 import sys
 import traceback

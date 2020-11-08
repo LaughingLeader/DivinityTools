@@ -1,18 +1,10 @@
 import os
 from pathlib import Path
 from typing import List, Dict
-import dos2de_common as Common
 import subprocess
 from bs4 import BeautifulSoup,Tag
 import sys
 import traceback
-
-#import ctypes
-#kernel32 = ctypes.WinDLL('kernel32')
-#user32 = ctypes.WinDLL('user32')
-#SW_HIDE = 0
-#hWnd = kernel32.GetConsoleWindow()
-#user32.ShowWindow(hWnd, SW_HIDE)
 
 divine_path = Path("G:/Modding/DOS2DE/ConverterApp/divine.exe")
 
