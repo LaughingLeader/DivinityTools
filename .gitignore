@@ -12,6 +12,7 @@ Scripts/_Data*
 Scripts/WorkshopData/
 Scripts/Generated*
 Generated/
+OsirisExtenderTools/
 *.spec
 *.dll
 *.txt
