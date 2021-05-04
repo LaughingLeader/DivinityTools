@@ -3,6 +3,7 @@ from typing import List, Dict
 import uuid
 from numpy import int32
 import sys
+import json
 
 def GetArg(arg:int, fallback:any)->any:
 	if len(sys.argv) > arg:
@@ -11,7 +12,18 @@ def GetArg(arg:int, fallback:any)->any:
 			return val
 	return fallback
 
-def export_file(path, contents):
+def load_file(path:Path):
+    try:
+        if path.exists():
+            f = open(path, 'r', encoding='utf-8')
+            contents = f.read()
+            f.close()
+            return contents
+    except Exception as e:
+        print("Erroring reading '{}': {}".format(path.name, e))
+    return None
+
+def export_file(path:Path, contents):
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         f = open(str(path.absolute()), 'w', encoding='utf-8')
@@ -98,3 +110,46 @@ class Color():
     def debug_print(self):
         print("Color ({}) | a({}) r({}) g({}) b({}) = ({}) | ({})".format(
             self.int, self.a, self.r, self.g, self.b, self.to_hex().upper(), int32(self.to_int())))
+
+import numpy
+
+INDENT = 3
+SPACE = " "
+NEWLINE = "\n"
+
+# Changed basestring to str, and dict uses items() instead of iteritems().
+def to_json(o, level=0):
+  ret = ""
+  if isinstance(o, dict):
+    ret += "{" + NEWLINE
+    comma = ""
+    for k, v in o.items():
+      ret += comma
+      comma = ",\n"
+      ret += SPACE * INDENT * (level + 1)
+      ret += '"' + str(k) + '":' + SPACE
+      ret += to_json(v, level + 1)
+
+    ret += NEWLINE + SPACE * INDENT * level + "}"
+  elif isinstance(o, str):
+    ret += json.dumps(o)
+  elif isinstance(o, list):
+    ret += "[" + ",".join([to_json(e, level + 1) for e in o]) + "]"
+  # Tuples are interpreted as lists
+  elif isinstance(o, tuple):
+    ret += "[" + ",".join(to_json(e, level + 1) for e in o) + "]"
+  elif isinstance(o, bool):
+    ret += "true" if o else "false"
+  elif isinstance(o, int):
+    ret += str(o)
+  elif isinstance(o, float):
+    ret += '%.7g' % o
+  elif isinstance(o, numpy.ndarray) and numpy.issubdtype(o.dtype, numpy.integer):
+    ret += "[" + ','.join(map(str, o.flatten().tolist())) + "]"
+  elif isinstance(o, numpy.ndarray) and numpy.issubdtype(o.dtype, numpy.inexact):
+    ret += "[" + ','.join(map(lambda x: '%.7g' % x, o.flatten().tolist())) + "]"
+  elif o is None:
+    ret += 'null'
+  else:
+    raise TypeError("Unknown type '%s' for json serialization" % str(type(o)))
+  return ret

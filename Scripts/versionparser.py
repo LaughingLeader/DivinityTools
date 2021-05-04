@@ -9,4 +9,4 @@ def ParseVersionInt(version:int)->tuple:
 	return (major,minor,revision,build)
 
 print("268435456 = {}".format(ParseVersionInt(268435456)))
-print("0.9.0.1 = {}".format(ToVersionInt(0,9,0,1)))
+print("8,16,256,65355 = {}".format(ToVersionInt(8,16,256,65355)))
