@@ -12,7 +12,7 @@ events = {}
 event_pattern = re.compile('^event (.*?)\((.*)\) .*$', re.MULTILINE | re.IGNORECASE)
 
 output_template = """
-OsirisEvents = {{
+Data.OsirisEvents = {{
 {entries}
 }}
 """
@@ -30,7 +30,9 @@ with open("G:\Divinity Original Sin 2\DefEd\Data\Mods\LeaderLib_543d653f-446c-43
 	for m in matches:
 		name = m[0]
 		params = m[1]
-		arity = len(str.split(params, ","))
+		arity = 0
+		if params.strip() != "":
+			arity = len(str.split(params, ","))
 		#print(name, arity)
 		events[name] = arity
 	entry_text = "\n".join(entry_template.format(name=k, arity=events[k]) for k in sorted(events.keys()))

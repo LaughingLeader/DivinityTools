@@ -23,11 +23,28 @@ debug_files = [
 ]
 
 ignored = [
-    "FlashMouseMove"
+    "FlashMouseMove",
+    # Throws errors in the editor
+    "Action2",
+    "Action3",
+    "LinkDevice",
+    "TogglePause",
+    "UIRPSAutoResolve",
+    "UITradeConfirmOffer",
+    "UITradeMarkOffer",
+    "WidgetSliderDecrease",
+    "WidgetSliderIncrease",
+]
+
+ignored_keyword = [
+    "Perfmon"
 ]
 
 def ignore_input(key):
     for k in ignored:
+        if key == k:
+            return True
+    for k in ignored_keyword:
         if k in key:
             return True
     return False
@@ -64,3 +81,5 @@ def export_flash(inputEvents=None):
     events_str = ",".join(['"IE {}"'.format(x) for x in sorted(inputEvents.keys()) if not ignore_input(x)])
     output_str = "this.events = new Array({});".format(events_str)
     Common.export_file(Path("Generated/FlashInputEvents.txt"), output_str)
+
+export_flash()

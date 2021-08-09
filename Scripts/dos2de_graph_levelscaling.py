@@ -170,8 +170,8 @@ AddLines(fig, "")
 # AddLines(fig, " (DU)")
 
 Ext.ExtraData.Reset()
-Ext.ExtraData.LoadFile(armorMitDataFile.absolute())
+#Ext.ExtraData.LoadFile(armorMitDataFile.absolute())
 
-AddLines(fig, " (AM)")
+##AddLines(fig, " (AM)")
 
 win = PlotlyViewer(fig)

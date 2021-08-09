@@ -39,6 +39,39 @@ output_soundsbankslsx_template = """<?xml version="1.0" ?>
  </region>
 </save>"""
 
+output_soundsyncs_template = """<?xml version="1.0" ?>
+<save>
+ <header version="1" time="1339579443" />
+ <region id="Sound">
+     <node id="root">
+         <children>
+             <node id="SoundSyncs"> 
+                 <children>
+					 {children}
+				 </children>
+             </node>
+         </children>
+     </node>
+ </region>
+</save>"""
+
+syncgroup_template = """					<node id="SyncGroup">
+						<attribute id="Name" value="{name}" type="22" />
+						<children>
+							<node id="States">
+								<children>
+									{states}
+								</children>
+							</node>
+						</children>
+					</node>"""
+
+state_template = """									<node id="State">
+										<attribute id="Name" value="{name}" type="22" />
+										<attribute id="Load" value="{load}" type="19" />
+									</node>
+"""
+
 def get_arg(arg, fallback):
 	if len(sys.argv) > arg:
 		val = sys.argv[arg]
