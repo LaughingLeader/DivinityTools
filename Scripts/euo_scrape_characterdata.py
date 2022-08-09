@@ -1,4 +1,3 @@
-import sys
 from bs4 import BeautifulSoup,Tag
 import os
 from pathlib import Path
@@ -9,38 +8,14 @@ from typing import List, Dict
 script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(script_dir.resolve())
 
-file_top = "Name\tRegion\tID\tUUID\tRootTemplate\tLevel\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tSkills\tScripts\tIsGlobal\tIsBoss\tDefault State\tPosition\n"
-data_template = '{name}\t{region}\t{id}\t{uuid}\t{template}\t{level}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{skills}\t{scripts}\t{isGlobal}\t{boss}\t{default_state}\t{pos}\n'
+file_top = "Name\tUUID\tStats\tAlignment\tTrade Treasure\tTreasure\tTags\tSkills\tScripts\tIsBoss\tDefault State\n"
+data_template = '{name}\t{id}\t{stats}\t{alignment}\t{trade_treasure}\t{treasure}\t{tags}\t{skills}\t{scripts}\t{boss}\t{default_state}\n'
+entry_template = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id});\n'
+entry_template2 = 'LLENEMY_Elites_AddUpgradeChance("{level}", {id}, "{group}", "{type}");\n'
 #file_top = "UUID\tName\tAlignment\tDialog\tDefault State\tIsBoss\tTags\n"
 #data_template = '{id}\t{name}\t{alignment}\t{dialog}\t{default_state}\t{boss}\t{tags}\n'
 
 from enum import Enum
-
-def get_attribute(xml, id):
-	v = xml.find("attribute", attrs={"id":id})
-	if v is not None:
-		try:
-			inner = v["value"]
-			return inner
-		except: pass
-	return ""
-
-script_data:dict[str,str] = {}
-script_lsx_folders = [
-	Path("D:/Modding/DOS2DE_Extracted/Public/Shared/Content/Assets/Scripts"),
-	Path("D:/Modding/DOS2DE_Extracted/Public/DivinityOrigins_1301db3d-1f54-4e98-9be5-5094030916e4/Content/Assets/Scripts"),
-]
-for p in script_lsx_folders:
-	for script_file in p.rglob("*.lsx"):
-		with script_file.open('r') as f:
-			lsx_xml = BeautifulSoup(f.read(), 'lxml')
-			for script_bank in lsx_xml.find_all("node", attrs={"id":"ScriptBank"}):
-				script_objects = list(script_bank.find_all("node", attrs={"id":"Resource"}))
-				for obj in script_objects:
-					uuid = get_attribute(obj, "ID")
-					name = get_attribute(obj, "Name")
-					if uuid and name:
-						script_data[uuid] = name
 
 class DefaultState(Enum):
 	Idle = 0
@@ -67,8 +42,6 @@ class Character():
 		self.uuid = ""
 		self.boss = False
 		self.display_name = ""
-		self.region = ""
-		self.level = 1
 		self.id = ""
 		self.tags:List[str] = []
 		self.alignment = ""
@@ -80,8 +53,7 @@ class Character():
 		self.skills:List[str] = []
 		self.scripts:List[str] = []
 
-	def parse(self, xmlobj:Tag, template=""):
-		self.template = template
+	def parse(self, xmlobj):
 		default_state = get_attribute(xmlobj, "DefaultState")
 		is_boss = get_attribute(xmlobj, "IsBoss")
 		display_name = get_attribute(xmlobj, "DisplayName")
@@ -111,19 +83,10 @@ class Character():
 		self.boss = is_boss == "True"
 		self.alignment = get_attribute(xmlobj, "Alignment")
 		self.defaultdialog = get_attribute(xmlobj, "DefaultDialog")
-		self.isGlobal = get_attribute(xmlobj, "IsGlobal") == "True"
 		self.stats = get_attribute(xmlobj, "Stats")
-		self.region = get_attribute(xmlobj, "LevelName")
-		level_override = get_attribute(xmlobj, "LevelOverride")
-		if level_override:
-			self.level = int(level_override)
 
 		if self.defaultdialog != "":
 			print("{} has dialog {}".format(self.name, self.defaultdialog))
-
-		transform_node = xmlobj.find("node", attrs={"id":"Transform"})
-		if transform_node:
-			self.pos = get_attribute(transform_node, "Position").replace(" ", ";")
 
 		tags_xml = list(xmlobj.find_all("node", attrs={"id":"Tag"}))
 		for x in tags_xml:
@@ -131,14 +94,11 @@ class Character():
 			if tag_name is not None and tag_name != "" and not tag_name in self.tags:
 				self.tags.append(tag_name)
 
-		scripts_xml = list(xmlobj.find_all("node", attrs={"id":"Script"}))
-		for script_node in scripts_xml:
-			script_uuid = get_attribute(script_node, "UUID")
-			if script_uuid is not None and script_uuid != "":
-				script_name = script_data.get(script_uuid, script_uuid)
-				if script_name != "DefaultCharacter" and not script_name in self.scripts:
-					self.scripts.append(script_name)
-
+		scripts_xml = list(xmlobj.find_all("node", attrs={"id":"Scripts"}))
+		for x in scripts_xml:
+			scripts_name = get_attribute(x, "Script")
+			if scripts_name is not None and scripts_name != "" and not scripts_name in self.scripts:
+				self.scripts.append(scripts_name)
 		
 		trade_treasure_xml = list(xmlobj.find_all("node", attrs={"id":"TradeTreasures"}))
 		for x in trade_treasure_xml:
@@ -176,10 +136,9 @@ class Character():
 				self.copy(template, "alignment")
 				self.copy(template, "boss")
 				self.copy(template, "stats")
-				self.copy(template, "level")
-				for ttag in template.tags:
-					if not ttag in self.tags:
-						self.tags.append(ttag)
+				for tag in template.tags:
+					if not tag in self.tags:
+						self.tags.append(tag)
 				if len(self.trade_treasure) == 0:
 					for treasure in template.trade_treasure:
 						if not treasure in self.trade_treasure:
@@ -188,17 +147,10 @@ class Character():
 					for treasure in template.treasure:
 						if not treasure in self.treasure:
 							self.treasure.append(treasure)
-				if len(self.scripts) == 0:
-					for uuid in template.scripts:
-						script_name = script_data.get(uuid, uuid)
-						if script_name != "DefaultCharacter" and not script_name in self.scripts:
-							self.scripts.append(script_name)
 
-	def export_list(self, tbl, empty:str="❌"):
+	def export_list(self, tbl, repl="", repl_with=""):
 		tbl.sort(reverse=False)
-		if len(tbl) == 0:
-			return empty
-		return ";".join(list(sorted(tbl)))
+		return str(tbl).strip('[]').replace("'", "").replace(repl, repl_with)
 
 	def get_default_state(self):
 		try:
@@ -225,28 +177,147 @@ class Character():
 		if treasure_export == "Empty": treasure_export = ""
 		if trade_treasure_export == "Empty": trade_treasure_export = ""
 
-		return data_template.format(
-			id=self.name,
-			template=self.template,
-			uuid=self.uuid,
-			name=self.display_name,
-			boss=self.boss and "√" or "❌",
-			isGlobal=self.isGlobal and "√" or "❌",
-			alignment=self.alignment,
-			dialog=self.defaultdialog,
-			stats=self.stats,
-			tags=self.export_list(self.tags, " "),
-			skills=self.export_list(self.skills, " "),
-			default_state=self.get_default_state(),
-			treasure=treasure_export,
-			trade_treasure=trade_treasure_export,
-			level=self.level,
-			region=self.region,
-			pos=self.pos,
-			scripts=self.export_list(self.scripts, " ")
-		)
+		return data_template.format(id=self.id, name=self.display_name,
+			boss=self.boss,alignment=self.alignment,dialog=self.defaultdialog,stats=self.stats,
+				tags=self.export_list(self.tags),skills=self.export_list(self.skills), default_state=self.get_default_state(),
+					treasure=treasure_export,trade_treasure=trade_treasure_export)
+
+def get_attribute(xml, id):
+	v = xml.find("attribute", attrs={"id":id})
+	if v is not None:
+		try:
+			inner = v["value"]
+			return inner
+		except: pass
+	return ""
+
+elite_tags = {
+	"TUT_Tutorial_A" : [
+		"BADASSCIVILIAN",
+		"NOT_MESSING_AROUND",
+		"PALADIN",
+		#"AGGRESSIVEANIMAL",
+	],
+	"FJ_FortJoy_Main" : [
+		"BADASSCIVILIAN",
+		"NOT_MESSING_AROUND",
+		"PALADIN",
+	],
+	"LV_HoE_Main" : [
+		"BADASSCIVILIAN",
+		"NOT_MESSING_AROUND"
+	],
+	"RC_Main" : [
+		"NOT_MESSING_AROUND",
+		"BLOODSPAWN",
+	],
+	"CoS_Main" : [
+		"NOT_MESSING_AROUND",
+		"Orc",
+		"DEMON",
+		"AUTOMATON",
+	],
+	"Arx_Main" : [
+		"NOT_MESSING_AROUND",
+		"INFERNAL_LIZARD",
+		"ARX_GARDENBOSS",
+	]
+}
+
+def has_elite_tag(x:Character, key:str)->bool:
+	if "GHOST" in x.tags:
+		return False
+	if key in elite_tags.keys():
+		group = elite_tags[key]
+		for tag in group:
+			if tag in x.tags:
+				return True
+	return False
+
+def is_elite_tag(tag:str, key:str)->bool:
+	if key in elite_tags.keys():
+		group = elite_tags[key]
+		if tag in group:
+			return True
+	return False
+
+def has_elite_treasure(x:Character, key:str)->bool:
+	for name in x.treasure:
+		if "boss" in name.lower():
+			return True
+	return False
+
+guaranteed_upgrades = {
+	"S_FTJ_SW_FinalBattle_Voidwoken_7dcf3cc2-d015-4aff-9949-71fc539fcc73": [
+		("Immunities", "Immunity"),
+		("Bonus", "Infusion_Elite"),
+		("Bonus", "Special"),
+	],
+	"S_GLO_Alexandar_03e6345f-1bd3-403c-80e2-a443a74f6349": [
+		("Auras", "Auras_Main"),
+		("Immunities", "Immunity"),
+	],
+	"S_GLO_Dallis_69b951dc-55a4-44b8-a2d5-5efedbd7d572": [
+		("Talents", "Elite"),
+		("Auras", "Auras_Main"),
+	],
+	"S_FTJ_GhettoBoss_84758f75-01a3-4cce-9922-f42ffc4afddd": [
+		("Bonus", "Infusion_Elite"),
+		("Auras", "Auras_Main"),
+	],
+	"S_FTJ_MagisterTorturer_1d1c0ba0-a91e-4927-af79-6d8d27e0646b": [
+		("Bonus", "Infusion_Elite")
+	],
+	"S_FTJ_SW_Witch_4014aee0-56f1-47e0-a8eb-89c4b5a1da83": [
+		("Talents", "Elite")
+	],
+	"S_GLO_PurgedDragon_c099caa6-1938-4b4f-9365-d0881c611e71": [
+		("Immunities", "Immunity"),
+		("Bonus", "Infusion_Elite"),
+		("Bonus", "Special"),
+	],
+	"S_RC_DW_SourceLich_Stronger_2c8d84ef-bfd0-4ff7-93fe-b3728d05ee87": [
+		("Immunities", "Immunity"),
+		("Buffs", "Elite"),
+	],
+	"S_RC_BF_Ferryman_6d4270d3-2f01-4674-8668-396ac0a4c703": [
+		("Immunities", "Immunity")
+	],
+	"S_CoS_Temples_Orc_CampBlackRing_Captain_1eceaf90-79a6-4d36-9360-975f1464b0e3": [
+		("Auras", "Auras_Main")
+	],
+}
 
 def export(key, level_data):
+	output_str = file_top
+	bosses = list([x for x in level_data if x.default_state == 0 and (x.boss == True or has_elite_tag(x, key) or has_elite_treasure(x, key))])
+	bosses.sort(key=lambda x: (x.display_name.strip()), reverse=False)
+	for character in bosses:
+		output_str += character.export()
+	if output_str != "":
+		output_str += '\n'
+		for character in bosses:
+			elite_comment = character.export_list([x for x in character.tags if is_elite_tag(x, key)])
+			if elite_comment == "":
+				elite_comment = "Treasure: {}".format(character.export_list(list([x for x in character.treasure if "boss" in x.lower()])))
+			else:
+				elite_comment = "Tags: " + elite_comment
+			bonus_comment = "// {} | {}\n".format(character.display_name, elite_comment)
+			if character.boss:
+				bonus_comment = "// Boss: {}\n".format(character.display_name)
+			output_str += bonus_comment
+			if character.id in guaranteed_upgrades.keys():
+				for upgrade_group,upgrade_type in guaranteed_upgrades[character.id]:
+					output_str += entry_template2.format(level=key, id=character.id, 
+					group=upgrade_group, type=upgrade_type)
+			else:
+				output_str += entry_template.format(level=key, id=character.id)
+
+	if output_str != "":
+		output_path = script_dir.joinpath("Generated_CharacterData").joinpath("Bosses_{}.txt".format(key))
+		Common.export_file(output_path, output_str)
+		print("Saved boss character data to '{}'".format(output_path.name))
+
 	output_str = file_top
 	for character in level_data:
 		output_str += character.export()
@@ -293,46 +364,20 @@ for p in template_lsx_files:
 			character.parse(obj)
 			root_templates[character.uuid] = character
 
-character_data_folders = [
-	Path("D:/Modding/DOS2DE_Extracted/Mods/DivinityOrigins_1301db3d-1f54-4e98-9be5-5094030916e4/Levels/"),
-	Path("D:/Modding/DOS2DE_Extracted/Mods/DivinityOrigins_1301db3d-1f54-4e98-9be5-5094030916e4/Globals/"),
-	Path("D:/Modding/DOS2DE_Extracted/Mods/ArmorSets/Levels/"),
-	Path("D:/Modding/DOS2DE_Extracted/Mods/ArmorSets/Globals/"),
-]
-
-main_levels = [
-	"TUT_Tutorial_A",
-	"FJ_FortJoy_Main",
-	"LV_HoE_Main",
-	"LV_Topdeck_A",
-	"LV_Deck-1_A",
-	"LV_Deck-2_A",
-	"RC_Main",
-	"CoS_Main",
-	"ARX_Main",
-	"ARX_Endgame",
-]
-
-def get_region_order(region):
-	try:
-		return main_levels.index(region)
-	except:
-		return 999
-
-ALL_LEVELS = False
-
 data_dir = Path("D:/Modding/DOS2DE_Extracted/Mods/DivinityOrigins_1301db3d-1f54-4e98-9be5-5094030916e4")
-lsx_files = []
-for p in character_data_folders:
-	files = list(p.rglob("**/Characters/_merged.lsx"))
-	lsx_files.extend(files)
+lsx_files = list(data_dir.joinpath("Levels/").rglob("**/Characters/_merged.lsx"))
+global_lsx_files = list(data_dir.joinpath("Globals/").rglob("**/Characters/_merged.lsx"))
+all_levels:Dict[str, List[Character]] = {}
 
-all_characters:dict[str, Character] = {}
+lsx_files.extend(global_lsx_files)
 
 for p in lsx_files:
-	level_name = p.parent.parent.name
-	if not ALL_LEVELS and not level_name in main_levels:
-		continue
+	level_name = p.parent.name
+
+	if not level_name in all_levels.keys():
+		all_levels[level_name] = []
+
+	level_data:List[Character] = all_levels[level_name]
 
 	lsx_path = p
 	print("Reading file '{}'".format(lsx_path))
@@ -348,18 +393,11 @@ for p in lsx_files:
 	for obj in game_objects:
 		root_template = get_attribute(obj, "TemplateName")
 		character = Character()
-		character.parse(obj, root_template)
+		character.parse(obj)
 		if root_template is not None:
 			character.load_from_root(root_template, root_templates)
-		all_characters[character.id] = character
+		level_data.append(character)
 
-output_path = script_dir.joinpath("Generated_CharacterData").joinpath("AllCharacters.tsv")
-
-characters = list(all_characters.values())
-characters.sort(key=lambda x: (get_region_order(x.region), x.display_name), reverse=False)
-
-output_str = file_top
-for character in characters:
-	output_str += character.export()
-Common.export_file(output_path, output_str)
-print("Saved character data to '{}'".format(output_path.name))
+for level_name,level_data in all_levels.items():
+	level_data.sort(key=lambda x: x.id, reverse=False)
+	export(level_name, level_data)
