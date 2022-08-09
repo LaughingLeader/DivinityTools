@@ -2,11 +2,16 @@ from bs4 import BeautifulSoup
 from bs4 import Tag
 import os
 from pathlib import Path
-import glob
 import dos2de_common as Common
 from typing import List, Dict
 
-english = Common.GetEnglishLocalization("G:/Modding/DOS2DE/Projects_Source/DivinityTools/Scripts/_Data_Characters/english.xml")
+english_xml = Common.GetEnglishLocalization("D:/Modding/DOS2DE_Extracted/Localization/English/english.xml")
+stringkeyfiles_dir = Path("D:/Modding/DOS2DE_Extracted/Public/Shared/Localization/Stats")
+
+skilldata_path = Path("D:/Modding/DOS2DE_Extracted/SkillData.txt")
+statusdata_path = Path("D:/Modding/DOS2DE_Extracted/StatusData.txt")
+
+stringkey_data = {}
 
 class LocaleEntry():
     def __init__(self, node:Tag):
@@ -15,8 +20,9 @@ class LocaleEntry():
         self.key = Common.GetAttributeNodeValue(node, "UUID")
         self.stub_content = content_node["value"]
         self.content = ""
-        if self.handle != "" and self.handle in english.keys():
-            self.content = english[self.handle]
+        if self.handle != "":
+            self.content = english_xml.get(self.handle, self.stub_content)
+        stringkey_data[self.key] = self
 
 class LocaleFile():
     def __init__(self, path:Path):
@@ -25,7 +31,7 @@ class LocaleFile():
         self.entries: List[LocaleEntry] = []
 
 def GetLocaleFiles()->List[LocaleFile]:
-    lsx_files: List[Path] = list(Path("G:\Modding\DOS2DE\Projects_Source\DivinityTools\Scripts\_Data_Localization").rglob("*.lsx"))
+    lsx_files: List[Path] = list(stringkeyfiles_dir.rglob("*.lsx"))
 
     locale_files: List[LocaleFile] = []
 
@@ -34,7 +40,7 @@ def GetLocaleFiles()->List[LocaleFile]:
         locale_files.append(file_entry)
 
         print("Reading file '{}'".format(p))
-        f = open(p, 'r')
+        f = open(p, 'r', encoding='utf-8')
         lsx_xml = BeautifulSoup(f.read(), 'lxml')
         f.close()
 
@@ -52,12 +58,53 @@ def GetLocaleEntries()->List[LocaleEntry]:
 locale_files = GetLocaleFiles()
 output_tsv = "Key\tContent\tHandle\n"
 
+output_lines = []
+
 for file_entry in locale_files:
     for entry in file_entry.entries:
-        output_tsv += "{}\t{}\t{}\n".format(entry.key, entry.content, entry.handle)
+        output_lines.append("{}\t{}\t{}\n".format(entry.key, entry.content, entry.handle))
+
+output_lines = sorted(output_lines)
+output_tsv += "".join(output_lines)
 
 script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(script_dir.resolve())
 
 output_path = script_dir.joinpath("Generated_Localization").joinpath("Stats.tsv")
 Common.export_file(output_path, output_tsv)
+
+import re
+displayname_pattern = re.compile('data "DisplayNameRef" "(.*)"', re.MULTILINE | re.IGNORECASE)
+
+key_properties = {
+    '"DisplayName"': '"DisplayNameRef"',
+    '"Description"': '"DescriptionRef"',
+}
+
+def update_stats_text():
+    files = [skilldata_path, statusdata_path]
+    for p in files:
+        with p.open(mode='r', encoding='utf-8') as f:
+            lines = f.readlines()
+            for i,line in enumerate(lines):
+                if line != "":
+                    for keyatt,refatt in key_properties.items():
+                        if keyatt in line:
+                            pattern = f'data {keyatt} "(.*)"'
+                            m = re.match(pattern, line, re.IGNORECASE)
+                            if m:
+                                key = m.group(1)
+                                print(key)
+                                if key and key != "":
+                                    entry = stringkey_data.get(key)
+                                    if entry:
+                                        ref = lines[i+1]
+                                        if refatt in ref:
+                                            #lines[i+1] = f'data {refatt} "{entry.content}"//{entry.handle}\n'
+                                            lines[i+1] = f'data {refatt} "{entry.content}"\n'
+            
+            print(p.name)
+            output_path = script_dir.joinpath("Generated_Localization").joinpath(p.name)
+            Common.export_file(output_path, "".join(lines))
+
+update_stats_text()

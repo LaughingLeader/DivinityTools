@@ -6,12 +6,16 @@ from bs4 import BeautifulSoup,Tag
 import sys
 import traceback
 import argparse
+import dos2de_common as common
+script_name = Path(__file__).stem
+common.clear_log(script_name)
 
 parser = argparse.ArgumentParser(description='Convert files to lsf/lsx and back.')
 parser.add_argument("-f", "--files", type=str, help='Selection of files to include, separated with ;')
 args = parser.parse_args()
 
-divine_path = Path("G:/Modding/DOS2DE/ConverterApp/divine.exe")
+divine_path = Path(os.environ.get("LSLIB_PATH", __file__)).joinpath("divine.exe")
+
 
 def get_attribute(xml, id):
     v = xml.find("attribute", attrs={"id":id})
@@ -28,7 +32,7 @@ validTypes = [
     "lsf",
 ]
 
-def convertFile(filePath:Path):
+def convertFile(filePath:Path, game:str="dos2de")->bool:
     if type(filePath) == str:
         filePath = Path(filePath)
     inType = filePath.suffix.lower().replace(".", "")
@@ -38,20 +42,21 @@ def convertFile(filePath:Path):
             try:
                 with filePath.open('r', encoding='utf-8') as f:
                     lsx_xml = BeautifulSoup(f.read(), 'lxml')
-                    shouldBeLSB = lsx_xml.find("region", attrs={"id":"TranslatedStringKeys"}) is not None
+                    shouldBeLSB = lsx_xml.find("region", attrs={"id":"TranslatedStringKeys"}) is not None or Path(filePath.with_suffix(".lsb")).exists()
                     if shouldBeLSB:
                         outType = "lsb"
                     else:
                         outType = "lsf"
             except Exception as e:
-                print("Error opening file '{}':".format(filePath))
+                common.log(script_name, "Error opening file '{}':".format(filePath))
                 traceback.print_exc()
                 outType = "lsf"
 
         output_name = str(filePath.with_suffix("." + outType).absolute())
+        success = False
         p = subprocess.run([str(divine_path.absolute()), 
             "-g", 
-            "dos2de",
+            game,
             "-l", 
             "all",
             "-s",
@@ -69,8 +74,18 @@ def convertFile(filePath:Path):
             stdout=subprocess.PIPE, 
             stderr=subprocess.PIPE)
         if p.returncode == 0 and Path(output_name).exists():
-            print("Converted {} to {}.".format(filePath, output_name))
-        print("Result: ({}):\n{}".format(p.returncode, p.stdout))
+            common.log(script_name, common.trim(p.stdout))
+            common.log(script_name, "Converted {} to {}.".format(filePath, output_name))
+            success = True
+        else:
+            common.log(script_name, f"Error({p.returncode}):\n{common.trim(p.stdout)}")
+        return success
+
+def get_game(f:Path):
+    for p in f.parents:
+        if "Baldur's Gate 3" in p.name or "BG3" in p.name:
+            return "bg3"
+    return "dos2de"
 
 try:
     if args.files is not None:
@@ -85,14 +100,15 @@ try:
                     try:
                         convertFile(f)
                     except Exception as e:
-                        print("Error converting file '{}':".format(f))
+                        common.log(script_name, "Error converting file '{}':".format(f))
                         traceback.print_exc()
             else:
+                game = get_game(filePath)
                 try:
-                    convertFile(filePath)
+                    convertFile(filePath, game)
                 except Exception as e:
-                    print("Error converting file '{}':".format(filePath))
+                    common.log(script_name, "Error converting file '{}':".format(filePath))
                     traceback.print_exc()
 except Exception as e:
-    print("Error converting files:\n")
+    common.log(script_name, "Error converting files:\n")
     traceback.print_exc()

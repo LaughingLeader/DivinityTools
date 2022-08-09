@@ -2,15 +2,15 @@ from bs4 import BeautifulSoup
 from PIL import Image
 import os
 import sys
-
 import uuid
-
 import subprocess
-
 import pathlib
 from pathlib import Path
-
 import numpy
+
+import dos2de_common as common
+script_name = Path(__file__).stem
+common.clear_log(script_name)
 
 import time
 start_time = time.time()
@@ -118,7 +118,7 @@ atlas_size = 4096
 icon_size = 64
 
 images = get_images(images_dir)
-print("Merging {} images.".format(len(images)))
+common.log(script_name, "Merging {} images.".format(len(images)))
 
 icons = []
 
@@ -164,13 +164,13 @@ for img in images:
         icons_first.append(icon)
     else:
         icons.append(icon)
-    print("** Added icon '{}'.".format(icon.name))
+    common.log(script_name, "** Added icon '{}'.".format(icon.name))
     x += 1
     if(x >= col_max):
         y += 1
         x = 0
     if (y > row_max):
-        print("[ERROR] Hit the max atlas size!")
+        common.log(script_name, "[ERROR] Hit the max atlas size!")
         break
 
 icons.extend(icons_first)
@@ -195,7 +195,7 @@ for icon in icons:
 xml_str = create_atlas_output(icons_str, icon_size, icon_size, 
     texture_xml_output, atlas_uuid, atlas_size, atlas_size)
 
-print("Saving atlas to '{}'.".format(atlas_output))
+common.log(script_name, "Saving atlas to '{}'.".format(atlas_output))
 
 f = open(atlas_output, "w")
 f.write(xml_str)
@@ -203,15 +203,15 @@ f.write(xml_str)
 texture_image = Image.new('RGBA', (atlas_size, atlas_size), (0, 0, 0, 0))
 
 for icon in icons:
-    print("** Pasting '{}'.".format(icon.name))
+    common.log(script_name, "** Pasting '{}'.".format(icon.name))
     #texture_image.paste(icon.image, icon.pos, mask=0)
     texture_image.alpha_composite(icon.image, icon.pos)
 
-print("Saving texture to '{}'.".format(texture_output))
+common.log(script_name, "Saving texture to '{}'.".format(texture_output))
 
 texture_image.save(texture_output)
 
-print("Done. Took **{} seconds** to merge {} icons.".format(time.time() - start_time, total))
+common.log(script_name, "Done. Took **{} seconds** to merge {} icons.".format(time.time() - start_time, total))
 
 #convert_params = 'nvcompress -alpha -bc3 "{}" "{}"'.format(texture_output, texture_dds_output)
 
@@ -231,5 +231,5 @@ p = subprocess.run(["nvcompress",
     universal_newlines=True, 
     stdout=subprocess.PIPE, 
     stderr=subprocess.PIPE)
-print(p.stdout)
-print(p.stderr)
+common.log(script_name, p.stdout)
+common.log(script_name, p.stderr)
