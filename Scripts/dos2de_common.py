@@ -1,6 +1,5 @@
 import numpy
 from pathlib import Path
-from typing import List, Dict
 import uuid
 from numpy import int32
 import sys
@@ -57,20 +56,13 @@ def GetAttributeNodeValue(xml, id: str, fallback: str = "") -> str:
     return fallback
 
 
-def GetEnglishLocalization(path: str) -> Dict[str, str]:
-    from bs4 import BeautifulSoup
+def GetEnglishLocalization(path: str) -> dict[str, str]:
+    import lxml.etree as ET
     english_entries = {}
-    f = open(path, 'r', encoding='utf8')
-    english_xml = BeautifulSoup(f.read(), 'lxml')
-    f.close()
-    content_nodes = list(english_xml.find_all("content"))
-    for node in content_nodes:
-        try:
-            handle = node["contentuid"]
-            contents = node.text
-            english_entries[handle] = contents
-        except Exception as e:
-            print("Error parsing content node: \n{}".format(e))
+    with open(path, "rb") as f:
+        elem:ET._Element
+        for _,elem in ET.iterparse(f, tag="content"):
+            english_entries[elem.get("contentuid")] = elem.text
     return english_entries
 
 
