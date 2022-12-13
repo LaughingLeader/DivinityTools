@@ -4,9 +4,14 @@ import uuid
 from numpy import int32
 import sys
 import json
+import os
 
+script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+#os.chdir(script_dir)
+log_dir = script_dir.joinpath(f"_Logs")
+log_dir.mkdir(exist_ok=True, parents=True)
 
-def GetArg(arg: int, fallback: any) -> any:
+def GetArg(arg: int, fallback):
     if len(sys.argv) > arg:
         val = sys.argv[arg]
         if val != None:
@@ -14,7 +19,7 @@ def GetArg(arg: int, fallback: any) -> any:
     return fallback
 
 
-def load_file(path: Path) -> str:
+def load_file(path: Path) -> str|None:
     try:
         if path.exists():
             with path.open('r', encoding='utf-8') as f:
@@ -62,7 +67,7 @@ def GetEnglishLocalization(path: str) -> dict[str, str]:
     with open(path, "rb") as f:
         elem:ET._Element
         for _,elem in ET.iterparse(f, tag="content"):
-            english_entries[elem.get("contentuid")] = elem.text
+            english_entries[elem.get("contentuid", None)] = elem.text
     return english_entries
 
 
@@ -98,7 +103,7 @@ class Color():
         self.g = ((argb & 0x0000FF00) >> 8)
         self.b = (argb & 0x000000FF)
 
-    def to_int(self) -> int:
+    def to_int(self) -> int32:
         al = int32((self.a << 24) & 0xFF000000)
         rl = int32((self.r << 16) & 0x00FF0000)
         gl = int32((self.g << 8) & 0x0000FF00)
@@ -165,7 +170,7 @@ def trim(text:str):
     return "\n".join([s for s in text.splitlines() if s.strip()])
 
 def clear_log(file_name: str):
-    log_path = Path(__file__).parent.joinpath(f"_Logs/{file_name}").with_suffix(".log")
+    log_path = log_dir.joinpath(file_name).with_suffix(".log")
     with log_path.open('w', encoding='utf-8') as f:
         f.write("")
   
@@ -174,11 +179,10 @@ def log(file_name: str, msg: str, do_print:bool=True):
         return
     if do_print:
         print(msg)
-    log_path = Path(__file__).parent.joinpath(f"_Logs/{file_name}").with_suffix(".log")
-    log_path.parent.mkdir(exist_ok=True, parents=True)
+    log_path = log_dir.joinpath(file_name).with_suffix(".log")
     with log_path.open('a+', encoding='utf-8') as f:
         f.seek(0)
         data = f.read(100)
         if len(data) > 0:
             f.write("\n")
-            f.write(msg)
+        f.write(msg)

@@ -10,7 +10,7 @@ displayDialogLinesAsComments = True
 
 ENGLISH_LOCALE = common.GetEnglishLocalization("D:/Modding/DOS2DE_Extracted/Localization/English/english.xml")
 
-metadata_master = "D:\Modding\DOS2DE_Extracted\Localization\English\Soundbanks\VoiceMetaData.lsx"
+metadata_master = "D:/Modding/DOS2DE_Extracted/Localization/English/Soundbanks/VoiceMetaData.lsx"
 template_entry = "_a(guid, \"{handle}\", \"Localization/English/Soundbanks/{file}\", {length})\n"
 script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(script_dir)
@@ -44,7 +44,7 @@ def Run():
         action:str
         elem:ET._Element
         for action, elem in ET.iterparse(f, tag="node"):
-            if elem.get("id") == "VoiceSpeakerMetaData":
+            if elem.get("id", None) == "VoiceSpeakerMetaData":
                 guid = get_guid(elem)
                 if guid is not None:
                     speaker_entries[guid] = elem
@@ -56,10 +56,10 @@ def Run():
         if speaker_node is not None:
             child:ET._Element
             for child in speaker_node.iterdescendants("node"):
-                if child.get("id") == "VoiceTextMetaData":
+                if child.get("id", None) == "VoiceTextMetaData":
                     line_data = {}
                     has_data = False
-                    for n in child.iterdescendants():
+                    for n in child.iterdescendants(None):
                         if n.tag == "attribute" and n.get("id") == "MapKey":
                             handle = n.get("value")
                             line_data["Handle"] = handle
@@ -79,14 +79,15 @@ def Run():
         return output
 
     Voices = {
-        "Warrior_Male": "7b6c1f26-fe4e-40bd-a5d0-e6ff58cef4fe",
-        "Warrior_Female": "3fa5bdba-c232-430e-a8ba-b8577ac6e131",
-        "Adventurer_Male": "c451954c-73bf-46ce-a1d1-caa9bbdc3cfd",
-        "Adventurer_Female": "0ad5969c-d7d3-471c-a029-d268d0de43ef",
-        "Scholar_Male": "41a06985-7851-4c29-8a78-398ccb313f39",
-        "Scholar_Female": "be402c2a-f28c-4a33-9256-c17a42b23212",
-        "Trickster_Female": "db6d2c35-6f52-4115-a460-30e9bb1b2eb5",
-        "Trickster_Male": "41a594ed-b768-4289-9f17-59f701cc6910",
+        # "Warrior_Male": "7b6c1f26-fe4e-40bd-a5d0-e6ff58cef4fe",
+        # "Warrior_Female": "3fa5bdba-c232-430e-a8ba-b8577ac6e131",
+        # "Adventurer_Male": "c451954c-73bf-46ce-a1d1-caa9bbdc3cfd",
+        # "Adventurer_Female": "0ad5969c-d7d3-471c-a029-d268d0de43ef",
+        # "Scholar_Male": "41a06985-7851-4c29-8a78-398ccb313f39",
+        # "Scholar_Female": "be402c2a-f28c-4a33-9256-c17a42b23212",
+        # "Trickster_Female": "db6d2c35-6f52-4115-a460-30e9bb1b2eb5",
+        # "Trickster_Male": "41a594ed-b768-4289-9f17-59f701cc6910",
+        "Slane": "c099caa6-1938-4b4f-9365-d0881c611e71",
         #"Djinn": "838283f5-a45f-4892-a4ac-fae2f99d4de0",
         #"SallowMan": "d07e0f6b-c473-47f2-9d1c-e1f6f0ef61af",
         # "Harken": "e446752a-13cc-4a88-a32e-5df244c90d8b",

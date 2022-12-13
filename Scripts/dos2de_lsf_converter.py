@@ -6,9 +6,16 @@ from bs4 import BeautifulSoup,Tag
 import sys
 import traceback
 import argparse
+
 import dos2de_common as common
+
+script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(script_dir)
+
 script_name = Path(__file__).stem
 common.clear_log(script_name)
+
+common.log(script_name, f"Processing args: {';'.join(sys.argv)}")
 
 parser = argparse.ArgumentParser(description='Convert files to lsf/lsx and back.')
 parser.add_argument("-f", "--files", type=str, help='Selection of files to include, separated with ;')
@@ -32,7 +39,7 @@ validTypes = [
     "lsf",
 ]
 
-def convertFile(filePath:Path, game:str="dos2de")->bool:
+def convertFile(filePath:Path, game:str="dos2de")->bool|None:
     if type(filePath) == str:
         filePath = Path(filePath)
     inType = filePath.suffix.lower().replace(".", "")
@@ -88,10 +95,12 @@ def get_game(f:Path):
     return "dos2de"
 
 try:
+    common.log(script_name, f"Processing args: {args.files}")
     if args.files is not None:
         files:List[Path] = [Path(s) for s in args.files.split(";")]
         for filePath in files:
             if filePath.is_dir():
+                common.log(script_name, f"Converting directory {filePath.name}")
                 subFiles:List[Path] = []
                 subFiles.extend(filePath.rglob("*.lsx"))
                 subFiles.extend(filePath.rglob("*.lsb"))
@@ -103,6 +112,7 @@ try:
                         common.log(script_name, "Error converting file '{}':".format(f))
                         traceback.print_exc()
             else:
+                common.log(script_name, f"Converting {filePath.name}")
                 game = get_game(filePath)
                 try:
                     convertFile(filePath, game)
