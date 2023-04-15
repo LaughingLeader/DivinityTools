@@ -10,14 +10,14 @@ data_paks = [
     "GamePlatform.pak",
     "Engine.pak",
     "EngineShaders.pak",
-    # "Effects.pak",
+    "Effects.pak",
     "Icons.pak",
     # "LowTex.pak",
     # "Materials.pak",
     # "Minimaps.pak",
     # "SharedSoundBanks.pak",
     # "SharedSounds.pak",
-    # "Textures.pak",
+    "Textures.pak",
     "Shared.pak",
     "SharedDOS.pak",
     "Arena.pak",
@@ -25,8 +25,8 @@ data_paks = [
     "Origins.pak",
     "Squirrel.pak",
     "Localization/English.pak",
-    # "Localization/Video.pak",
-    # "Localization/Voice.pak",
+    "Localization/Video.pak",
+    "Localization/Voice.pak",
     # "Localization/Amlatspanish/Amlatspanish.pak",
     # "Localization/Chinese/Chinese.pak",
     # "Localization/Chinese/ChineseData.pak",
@@ -59,6 +59,7 @@ data_paks = [
     "Patch7.pak",
     "Patch7_Hotfix.pak",
     "Patch8.pak",
+    "Patch9.pak",
     "Patch10.pak",
 ]
 
@@ -67,8 +68,9 @@ default_divine_path = os.environ.get("LSLIB_PATH", None)
 
 if default_data_path is not None:
     default_data_path = Path(default_data_path)
-    if default_data_path.exists() and not "DefEd/Data" in default_data_path.absolute():
-        default_data_path = default_data_path.joinpath("DefEd/Data")
+    baseDataDir = Path("DefEd/Data")
+    if default_data_path.exists() and not baseDataDir in default_data_path.parents:
+        default_data_path = default_data_path.joinpath(baseDataDir)
 
 if default_divine_path is not None:
     default_divine_path = Path(default_divine_path)
@@ -79,7 +81,7 @@ default_extract_path = Path( __file__ ).parent.joinpath("/GameData_Extracted_{}"
 
 async def extract_pak_async(f:Path, divine:Path, output:Path):
     targs = [
-        divine.absolute(),
+        str(divine.absolute()),
         "-g dos2de",
         f'-s "{f.absolute()}"',
         "-a extract-package",
@@ -102,9 +104,9 @@ async def extract_pak_async(f:Path, divine:Path, output:Path):
     if stderr:
         print(f'[divine]\n{stderr.decode(encoding)}')
 
-async def extract_pak(f:Path, divine:Path, output:Path):
+def extract_pak(f:Path, divine:Path, output:Path, test_mode:bool = False):
     targs = [
-        divine.absolute(),
+        str(divine.absolute()),
         "-g dos2de",
         f'-s "{f.absolute()}"',
         "-a extract-package",
@@ -112,6 +114,9 @@ async def extract_pak(f:Path, divine:Path, output:Path):
         "-i pak"
     ]
     cmd = " ".join(targs)
+    if test_mode:
+        print(f'[divine] {cmd}')
+        return True
     proc = subprocess.run(
         cmd,
         universal_newlines=True, 
@@ -127,12 +132,16 @@ async def extract_pak(f:Path, divine:Path, output:Path):
         return False
 
 def main():
+    # python dos2de_extract_paks.py -d "C:/DOS2DE/Data" -o "D:/_Temp/ExtractedPaks" -l "G:/Modding/DOS2DE/ConverterApp/divine.exe" --test
     parser = argparse.ArgumentParser(description='Extract all game data paks in order.')
     parser.add_argument("-d", "--data", type=Path, default=default_data_path, help='The game data directory, such as Divinity Original Sin 2\DefEd\Data')
     parser.add_argument("-o", "--output", type=Path, default=default_extract_path, help='The directory to extract files to.')
     parser.add_argument("-l", "--divine", type=Path, default=default_divine_path, help='The path to divine.exe.')
+    parser.add_argument("--test", action=argparse.BooleanOptionalAction, help='Test the script.')
+    parser.set_defaults(test=False)
     args = parser.parse_args()
 
+    test_mode = args.test == True
     if args.data is not None and args.output is not None and args.divine is not None:
         data_dir:Path = args.data
         output_dir:Path = args.output
@@ -147,16 +156,21 @@ def main():
 
         if not output_dir.exists():
             output_dir.mkdir(parents=True, exist_ok=True)
-        print(f"Extracting all game data paks to {output_dir}")
+        print(f"Extracting all game data paks to '{output_dir}'")
+        if test_mode:
+            print(f"Data directory set to '{data_dir}'")
         successes = 0
         errors = 0
         for pak_name in data_paks:
-            pak_path = data_dir.joinpath(f"/{pak_name}")
+            pak_path = data_dir.joinpath(pak_name)
             if pak_path.exists():
-                if extract_pak(pak_path, divine_path, output_dir):
+                if extract_pak(pak_path, divine_path, output_dir, test_mode):
+                    print(f"Extracted '{pak_path.name}'")
                     successes = successes + 1
                 else:
                     errors = errors + 1
+            elif test_mode:
+                print(f"Pak '{pak_path}' not found.")
         total = successes + errors
         print(f"Processed {total} paks. Successes({successes}) Errors({errors})")
 
